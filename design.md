@@ -51,7 +51,48 @@ For student who develop projects and program everyday. There are some school tas
 
 ---
 
+## Analysis
+
+Consider an `atomic task` which should not be split into several pieces or more tasks.
+
+For example, go to F2. Go to bed. Or have a drink.
+
+It makes no sense to split these tasks.
+
+However, for most cases, an atomic task makes barely progress.
+
+So we should combines several atomic task by specific sequence to make a real thing done.
+
+We call this structure as `work`.
+
+A work contains not just atomic tasks, it also contains `resources`, `estimated time`, `workflow` etc...
+
+This system should not manage atomic tasks but work.
+
+Because human will use different strategy when doing a same work.
+
+It should flexible and readable.
+
+---
+
 ## Core Structure
+
+### System Domain
+
+For this system, there is no need to use field Context and links or definition of done. It makes no sense for the system (it can't parse it). All it's function as below.
+
+- Dependency Graph: make all work provided is really executable
+- Energy Routing: Filter the work by high, medium, low energy cost for different occasions
+- Life Cycle State: Update `StatusTODO`, `StatusDOING`, `StatusDONE`
+- Document Pointer: Store the path to the document for specific work
+
+### Human Domain
+
+- Context & Links: Document reference, manual links
+- Atomic Step List (Workflow): The execution sequence
+- Definition of Done: The criteria for human confirm if a work is done.
+
+### Code
 
 ```go
 import "time"
@@ -67,9 +108,9 @@ const (
 type TaskStatus string
 
 const (
- StatusDONE  TaskStatus = "DONE"
  StatusTODO  TaskStatus = "TODO"
  StatusDOING TaskStatus = "DOING"
+ StatusDONE  TaskStatus = "DONE"
 )
 
 type TaskDetail struct {
