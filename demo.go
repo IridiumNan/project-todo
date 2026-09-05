@@ -1,8 +1,5 @@
-package main
-
-import (
-	"time"
-)
+// This file just for demo
+import "time"
 
 type Energy int
 
@@ -12,8 +9,6 @@ const (
 	EnergyHigh
 )
 
-// WorkStatus mark the status of a work
-// it can be TODO, DOING, DONE
 type WorkStatus int
 
 const (
@@ -22,39 +17,54 @@ const (
 	StatusDONE
 )
 
-type WorkContext interface {
-	// Provide offer information about specific work with suitable way
-	// For school work, it can just print the link which will be used
-	// For program development, it can use $EDITOR to open document
-	Provide()
+// ContextViewer for view context file
+// All context is store as a single file
+// And the ContextViewer is used to display the context with different way
+// It can be open with $EDITOR, or formatted print, colorful print or other method
+type ContextViewer interface {
+	// PathView receive the stored context file path
+	// Then display it by specific method
+	PathView(path string) error
+
+	// StrView receive the content of whole context file
+	// Usually formats or colors it for display
+	// StrView(content string)
 }
 
-// WorkDoc for manage the document about contains details about this work
-// usually for personal project development
-type WorkDoc struct {
-	Path string
+// EditorViewer which using terminal editor to view the context file
+// It doesn't hanle docx, doc or png files
+type EditorViewer struct {
+	// ViewCommands should be a shell command which receive a file path then display it's markdown content
+	// For instance, nvim %s, marktext %s, bat %s ...
+	// It support customization on toml configuration file
+	ViewCommands []string
 }
 
-const WorkDocSuffix = "doc"
+// PathView for EditorViewer
+// use the editor to open context file
+// It will try the ViewCommands one by one
+func (mv *EditorViewer) PathView(path string) error
 
-// Provide for WorkDoc use $EDITOR to open related document
-func (d *WorkDoc) Provide()
+// PlainPrintViewer a viewer which just print the context on terminal
+type PlainPrintViewer struct{}
 
-// WorkLink usually for school homework
-type WorkLink struct {
-	Link string
+// PathView for PlainPrintViewer
+// Just read file the print it on terminal
+func (ppv *PlainPrintViewer) PathView(path string) error
 
-	Comment string
-}
+// BatPrintViewer use bat command to view context
+type BatPrintViewer struct{}
 
-const WorkLinkSuffix = "link"
+func (bpv *BatPrintViewer) PathView(path string) error
 
-func (l *WorkLink) Provide()
+// ViewerType for sore type into file
+type ViewerType int
 
-// You can add more struct for context
-
-// NewContext Try all possible context type for this file
-func NewContext(contextPath string) WorkContext
+const (
+	ViewerEditor ViewerType = iota
+	ViewerPlainPrint
+	ViewerBatPrint
+)
 
 type Work struct {
 	// Use timestamp hash as id
@@ -67,13 +77,12 @@ type Work struct {
 
 	// Context provide the useful information about this work
 	// It will be store on the file Path
-	// system will load it into specific struct when it's used
-	// See [WorkContext.Provide]
-	// The ContextPath should use meaningful suffix for file name
-	// for [WorkDoc], it should be [WorkDocSuffix]
-	// for [WorkLink], it should be [WorkLinkSuffix]
-	// So that system can identify different types easier
 	ContextPath string
+
+	// Viewer for displaying the Context file content
+	// Current available types
+	// [EditorViewer] [PlainPrintViewer] [BatPrintViewer]
+	Viewer ViewerType
 
 	// Time record for logging and work analysis
 	CreateTime time.Time
@@ -91,19 +100,45 @@ type Work struct {
 	BlockedTimes int
 }
 
-// ReadyQueue which store all task with BlockedCount == 0 & Status == TODO
-// The key is the ID which is the hash value of create timestamp
-type ReadyQueue map[string]*Work
+// WorkFilter for filter valid work for current condition
+// There is no need to check if work.status is StatusTODO
+// The [WorkProvider.Provide] function will skip invalid status
+type WorkFilter func(*Work) bool
 
-type WorkEngine struct {
-	// LowQueue store the task which contains tasks whose Energy is EnergyLow and BlockedCount == 0
-	LowQueue ReadyQueue
+func EnergyFilter(e Energy) WorkFilter {
+	return func(w *Work) bool {
+		return w.BlockedTimes == 0 && w.EnergyRequirement == e
+	}
+}
 
-	// MediumQueue tasks whose Energy is EnergyMedium and BlockedCount == 0
-	MediumQueue ReadyQueue
-
-	// HighQueue tasks whose Energy is EnergyHigh and BlockedCount == 0
-	HighQueue ReadyQueue
-
+type WorkProvider struct {
 	AllWorks []*Work
+}
+
+func (wp *WorkProvider) Provide(filter WorkFilter) *Work {
+	for _, work := range wp.AllWorks {
+		// Check if status is todo
+		// if not skip
+		// Check on this provide loop because any work provided should be status todo
+		if work.Status != StatusTODO {
+			continue
+		}
+
+		if filter(work) {
+			return work
+		}
+	}
+	return nil
+}
+
+func CombinedFiler(filters ...WorkFilter) WorkFilter {
+	return func(w *Work) bool {
+		for _, f := range filters {
+			if !f(w) {
+				return false
+			}
+		}
+
+		return true
+	}
 }
