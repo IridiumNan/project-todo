@@ -14,12 +14,12 @@ const (
 
 // WorkStatus mark the status of a work
 // it can be TODO, DOING, DONE
-type WorkStatus string
+type WorkStatus int
 
 const (
-	StatusTODO  WorkStatus = "TODO"
-	StatusDOING WorkStatus = "DOING"
-	StatusDONE  WorkStatus = "DONE"
+	StatusTODO WorkStatus = iota
+	StatusDOING
+	StatusDONE
 )
 
 type WorkContext interface {
@@ -35,6 +35,8 @@ type WorkDoc struct {
 	Path string
 }
 
+const WorkDocSuffix = "doc"
+
 // Provide for WorkDoc use $EDITOR to open related document
 func (d *WorkDoc) Provide()
 
@@ -45,9 +47,14 @@ type WorkLink struct {
 	Comment string
 }
 
+const WorkLinkSuffix = "link"
+
 func (l *WorkLink) Provide()
 
-// You can all more struct for context
+// You can add more struct for context
+
+// NewContext Try all possible context type for this file
+func NewContext(contextPath string) WorkContext
 
 type Work struct {
 	// Use timestamp hash as id
@@ -59,8 +66,14 @@ type Work struct {
 	Status WorkStatus
 
 	// Context provide the useful information about this work
+	// It will be store on the file Path
+	// system will load it into specific struct when it's used
 	// See [WorkContext.Provide]
-	Context WorkContext
+	// The ContextPath should use meaningful suffix for file name
+	// for [WorkDoc], it should be [WorkDocSuffix]
+	// for [WorkLink], it should be [WorkLinkSuffix]
+	// So that system can identify different types easier
+	ContextPath string
 
 	// Time record for logging and work analysis
 	CreateTime time.Time
@@ -82,7 +95,7 @@ type Work struct {
 // The key is the ID which is the hash value of create timestamp
 type ReadyQueue map[string]*Work
 
-type TaskEngine struct {
+type WorkEngine struct {
 	// LowQueue store the task which contains tasks whose Energy is EnergyLow and BlockedCount == 0
 	LowQueue ReadyQueue
 
@@ -92,5 +105,5 @@ type TaskEngine struct {
 	// HighQueue tasks whose Energy is EnergyHigh and BlockedCount == 0
 	HighQueue ReadyQueue
 
-	AllTasks []*Work
+	AllWorks []*Work
 }
