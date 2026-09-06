@@ -1,0 +1,14 @@
+# Global Configuration for project-todo
+
+# default viewer when create a new work
+# 0 -> ViewerEditor, open context file with editor commands
+# 1 -> ViewerPlainPrint, just read file content then print it to terminal
+# 2 -> ViewerBatPrint, print context with bat command (some distro use batcat)
+default_viewer = 0
+
+# when a work context viewer is editor viewer, system will try to exec command one by one
+# %s will be replaced by context file path
+editor_view_commands = [
+    "nano %s",
+    "vim %s"
+]

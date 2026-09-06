@@ -33,7 +33,7 @@ func (wp *WorkProvider) Provide(filter WorkFilter) *models.Work {
 	return nil
 }
 
-func CombinedFiler(filters ...WorkFilter) WorkFilter {
+func MultiFiler(filters ...WorkFilter) WorkFilter {
 	return func(w *models.Work) bool {
 		for _, f := range filters {
 			if !f(w) {
