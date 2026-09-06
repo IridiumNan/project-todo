@@ -17,13 +17,15 @@ const maxSearchDepth = 4
 func searchDataDir() (string, error) {
 	searchCount := 0
 
+	rootDir := "/"
+
 	currPath, err := os.Getwd()
 	if err != nil {
 		slog.Error("while getting current dir path", "err", err)
 		currPath = "."
 	}
 
-	for searchCount <= maxSearchDepth {
+	for searchCount <= maxSearchDepth && currPath != rootDir {
 		if containsDataDir(currPath) {
 			return currPath, nil
 		}
