@@ -14,7 +14,7 @@ type Work struct {
 	Title string `toml:"title"`
 
 	// EnergyRequirement mark the suitable status for handling this work
-	// User set
+	// NOTE: User set
 	EnergyRequirement Energy `toml:"energy"`
 
 	// Auto generated
