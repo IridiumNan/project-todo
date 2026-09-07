@@ -2,8 +2,11 @@ package utils
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"path"
+
+	"github.com/IridiumNan/project-todo/internal/models"
 )
 
 // EnsureFileExist utils function which ensure file exist
@@ -27,4 +30,52 @@ func EnsureFileExist(filePath string) error {
 	}
 
 	return nil
+}
+
+const (
+	maxSearchDepth = 4
+	emptyPath      = ""
+)
+
+// SearchDir search for target dir
+// begin with startDir
+// if you want to begin with current dir, use [os.Getwd]
+// if targetDir not found, it will return [os.ErrNotExist]
+func SearchDir(targetDir string, startDir string) (foundPath string, err error) {
+	searchCount := 0
+
+	rootDir := "/"
+
+	currPath := startDir
+
+	for searchCount <= maxSearchDepth && currPath != rootDir {
+		if isContainsDir(currPath, targetDir) {
+			return currPath, nil
+		}
+
+		slog.Debug("data dir not found for current path, checking next", "current_path", currPath, "target", models.DataDirName)
+
+		currPath = path.Dir(currPath)
+
+		searchCount++
+	}
+	return emptyPath, os.ErrNotExist
+}
+
+// isContainsDir check if checkedPath (as dir) contains the targetDir
+// It just called by [SearchDir]
+func isContainsDir(checkedPath string, targetDir string) bool {
+	entries, err := os.ReadDir(checkedPath)
+	if err != nil {
+		slog.Error("while reading dir", "dir_path", checkedPath, "err", err)
+		return false
+	}
+
+	for idx := range entries {
+		if entries[idx].IsDir() && entries[idx].Name() == targetDir {
+			return true
+		}
+	}
+
+	return false
 }

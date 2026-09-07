@@ -1,4 +1,4 @@
-package config
+package utils
 
 import (
 	"os"
@@ -44,7 +44,11 @@ func TestSearchOnCurrentDir(t *testing.T) {
 		t.Errorf("error when change dir, target dir: %s, err: %s", testDir, err.Error())
 	}
 
-	foundPath, err := searchDataDir()
+	pwd, err := os.Getwd()
+	if err != nil {
+		t.Errorf("error when get current dir: %s", err.Error())
+	}
+	foundPath, err := SearchDir(models.DataDirName, pwd)
 	if err != nil {
 		t.Errorf("error when search path: %s", err.Error())
 	}
@@ -72,7 +76,11 @@ func TestSearchOnParentDir(t *testing.T) {
 		t.Errorf("error when change dir, target dir: %s, err: %s", depthDir, err.Error())
 	}
 
-	foundPath, err := searchDataDir()
+	pwd, err := os.Getwd()
+	if err != nil {
+		t.Errorf("error when get current dir: %s", err.Error())
+	}
+	foundPath, err := SearchDir(models.DataDirName, pwd)
 	if err != nil {
 		t.Errorf("error when search with depth 3, err: %s", err.Error())
 	}
@@ -102,7 +110,11 @@ func TestNotFoundAndNotReachRoot(t *testing.T) {
 		t.Errorf("error when change dir, target dir: %s, err: %s", depthDir, err.Error())
 	}
 
-	_, err = searchDataDir()
+	pwd, err := os.Getwd()
+	if err != nil {
+		t.Errorf("error when get current dir: %s", err.Error())
+	}
+	_, err = SearchDir(models.DataDirName, pwd)
 	if err != os.ErrNotExist {
 		t.Errorf("expected err not exist, but got: %v", err)
 	}
@@ -116,7 +128,15 @@ func TestNotFoundAndReachRoot(t *testing.T) {
 
 	// Don't call the prepareTargetDir then check if [os.IsNotExist]
 
-	_, err := searchDataDir()
+	err := os.Chdir(testDir)
+	if err != nil {
+		t.Errorf("error when change dir into testDir, err: %s", err.Error())
+	}
+	pwd, err := os.Getwd()
+	if err != nil {
+		t.Errorf("error when get current dir: %s", err.Error())
+	}
+	_, err = SearchDir(models.DataDirName, pwd)
 	if err != os.ErrNotExist {
 		t.Errorf("expected err not exist, but got: %v", err)
 	}
