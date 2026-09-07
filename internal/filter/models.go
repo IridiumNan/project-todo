@@ -1,6 +1,8 @@
 package filter
 
-import "github.com/IridiumNan/project-todo/internal/models"
+import (
+	"github.com/IridiumNan/project-todo/internal/models"
+)
 
 // WorkFilter for filter valid work for current condition
 // There is no need to check if work.status is StatusTODO

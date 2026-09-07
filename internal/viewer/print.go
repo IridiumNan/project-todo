@@ -7,7 +7,7 @@ type PlainPrintViewer struct{}
 // Just read file the print it on terminal
 func (ppv *PlainPrintViewer) PathView(path string) error
 
-// BatPrintViewer use bat command to view context
+// BatPrintViewer use bat command to view context or batcat (on ubuntu)
 type BatPrintViewer struct{}
 
 func (bpv *BatPrintViewer) PathView(path string) error

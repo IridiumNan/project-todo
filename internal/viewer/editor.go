@@ -15,7 +15,7 @@ type ContextViewer interface {
 }
 
 // EditorViewer which using terminal editor to view the context file
-// It doesn't hanle docx, doc or png files
+// It doesn't handle docx, doc or png files
 type EditorViewer struct {
 	// ViewCommands should be a shell command which receive a file path then display it's markdown content
 	// For instance, nvim %s, marktext %s, bat %s ...
