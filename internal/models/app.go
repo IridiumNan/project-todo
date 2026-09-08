@@ -6,23 +6,24 @@ import (
 )
 
 const (
-	AppName     = "project-todo"
-	EmptyStr    = ""
-	DataDirName = ".project-todo"
+	AppName      = "project-todo"
+	EmptyStr     = ""
+	DataDirName  = ".project-todo"
+	DataTomlName = "data.toml"
 )
 
-var HomeDir string = EmptyStr
+var homeDir string = EmptyStr
 
 func GetHomeDir() (string, error) {
-	if HomeDir != EmptyStr {
-		return HomeDir, nil
+	if homeDir != EmptyStr {
+		return homeDir, nil
 	}
 
 	var err error
-	HomeDir, err = os.UserHomeDir()
+	homeDir, err = os.UserHomeDir()
 	if err != nil {
-		return EmptyStr, fmt.Errorf("while getting home dir", "err", err)
+		return EmptyStr, fmt.Errorf("while getting home dir, err: %s", err)
 	}
 
-	return HomeDir, nil
+	return homeDir, nil
 }

@@ -1,3 +1,5 @@
+// Package models declare the core struct Work
+// It also defines several const variants which should be used globally
 package models
 
 import (

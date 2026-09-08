@@ -46,9 +46,9 @@ func (st *StoreToml) LoadMetadata(dataSrc io.Reader) (works []*models.Work, err 
 	return
 }
 
-// AppendMetadata function append data into dataDst directly, not backup original data
-func (st *StoreToml) AppendMetadata(dataDst io.Writer, newWorks []*models.Work) (err error) {
-	byteData := st.buildTomlByteData(newWorks)
+// WriteMetadata function write data into dataDst directly, not backup original data
+func (st *StoreToml) WriteMetadata(dataDst io.Writer, Works []*models.Work) (err error) {
+	byteData := st.buildTomlByteData(Works)
 
 	_, err = dataDst.Write(byteData)
 	if err != nil {
@@ -76,7 +76,7 @@ func (st *StoreToml) AppendMetadataToFile(dstPath string, newWorks []*models.Wor
 	}
 	dstFile.Close()
 
-	err = st.AppendMetadata(tmpFile, newWorks)
+	err = st.WriteMetadata(tmpFile, newWorks)
 
 	tmpFile.Close()
 	if err != nil {
@@ -99,7 +99,7 @@ func (st *StoreToml) DumpMetadataToFile(dstPath string, allWorks []*models.Work)
 		return fmt.Errorf("error when create tmp file, err: %s", err)
 	}
 
-	err = st.DumpMetadata(tmpFile, allWorks)
+	err = st.WriteMetadata(tmpFile, allWorks)
 	if err != nil {
 		return fmt.Errorf("error when write data into tmp file, err: %s", err)
 	}
@@ -112,18 +112,6 @@ func (st *StoreToml) DumpMetadataToFile(dstPath string, allWorks []*models.Work)
 	}
 
 	return nil
-}
-
-// DumpMetadata dump build the dump the [models.Work] structure into [io.Writer] directly
-func (st *StoreToml) DumpMetadata(dataDst io.Writer, allWorks []*models.Work) (err error) {
-	byteData := st.buildTomlByteData(allWorks)
-
-	_, err = dataDst.Write(byteData)
-	if err != nil {
-		return fmt.Errorf("error when write byte data, err: %s", err)
-	}
-
-	return
 }
 
 // buildTomlByteData build the []byte from []*[models.Work]
