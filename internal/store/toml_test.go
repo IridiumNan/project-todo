@@ -95,8 +95,16 @@ func loadToml() (works []*models.Work, err error) {
 func TestTomlAppend(t *testing.T) {
 }
 
+func appendToml(t *testing.T) {
+	st := StoreToml{}
+
+	err := st.AppendMetadataToFile(defaultTomlTestpath, tomlAppendWorks)
+	if err != nil {
+		t.Errorf("error when appen new toml work, path: %s, err: %s", defaultTomlTestpath, err.Error())
+	}
+}
+
 func TestTomlDumpLoad(t *testing.T) {
-	removeTomlTestFile(t)
 	dumpToml(t)
 
 	works, err := loadToml()
@@ -108,4 +116,20 @@ func TestTomlDumpLoad(t *testing.T) {
 			t.Errorf("want %v, got %v", tomlTestWorks[idx], works[idx])
 		}
 	}
+
+	appendToml(t)
+
+	expectedWorkList := append(tomlTestWorks, tomlAppendWorks...)
+
+	works, err = loadToml()
+	if err != nil {
+		t.Errorf("error when load work from defaultTomlTestpath: %s, err: %s", defaultTomlTestpath, err.Error())
+	}
+	for idx := range works {
+		if !isSameWork(expectedWorkList[idx], works[idx]) {
+			t.Errorf("want %v, got %v", tomlTestWorks[idx], works[idx])
+		}
+	}
+
+	removeTomlTestFile(t)
 }
