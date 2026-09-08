@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math/rand"
+	"os"
 	"testing"
 	"time"
 
@@ -40,6 +41,18 @@ func createTestWork() *models.Work {
 	}
 }
 
+var defaultTomlTestpath = "/tmp/go-test-metadata.toml"
+
+var tomlTestWorks = getTomlTestData(candidateSize)
+
+var tomlAppendWorks = getTomlTestData(2)
+
+func isSameWork(want *models.Work, got *models.Work) bool {
+	res := want.ID == got.ID && want.Title == got.Title && want.EnergyRequirement == got.EnergyRequirement && want.Status == got.Status && want.ContextPath == got.ContextPath && want.BlockedTimes == got.BlockedTimes
+
+	return res
+}
+
 func getTomlTestData(size int) (works []*models.Work) {
 	for range size {
 		works = append(works, createTestWork())
@@ -48,23 +61,51 @@ func getTomlTestData(size int) (works []*models.Work) {
 	return
 }
 
-// TODO: Test with load the file
-func TestTomlDump(t *testing.T) {
-	allWorks := getTomlTestData(candidateSize)
+func removeTomlTestFile(t *testing.T) {
+	if err := os.Remove(defaultTomlTestpath); err != nil {
+		t.Errorf("error when remove the defaultTomlTestpath: %s, err: %s", defaultTomlTestpath, err.Error())
+	}
+}
 
+func dumpToml(t *testing.T) {
 	st := StoreToml{}
 
-	defaultDumpTestPath := "/tmp/go-test-metadata.toml"
-	err := st.DumpMetadataToFile(defaultDumpTestPath, allWorks)
+	err := st.DumpMetadataToFile(defaultTomlTestpath, tomlTestWorks)
 	if err != nil {
 		t.Error(err)
 	}
-
-	slog.Info("please check the data file", "file_path", defaultDumpTestPath)
 }
 
-func TestTomlLoad(t *testing.T) {
+func loadToml() (works []*models.Work, err error) {
+	st := StoreToml{}
+
+	tomlSrc, err := os.OpenFile(defaultTomlTestpath, os.O_RDONLY, 0o644)
+	if err != nil {
+		return nil, fmt.Errorf("error when opening default toml test file, file path: %s, err: %s", defaultTomlTestpath, err.Error())
+	}
+
+	works, err = st.LoadMetadata(tomlSrc)
+	if err != nil {
+		slog.Error("when load metadata", "err", err)
+	}
+
+	return
 }
 
 func TestTomlAppend(t *testing.T) {
+}
+
+func TestTomlDumpLoad(t *testing.T) {
+	removeTomlTestFile(t)
+	dumpToml(t)
+
+	works, err := loadToml()
+	if err != nil {
+		t.Errorf("error when load work from defaultTomlTestpath: %s, err: %s", defaultTomlTestpath, err.Error())
+	}
+	for idx := range works {
+		if !isSameWork(tomlTestWorks[idx], works[idx]) {
+			t.Errorf("want %v, got %v", tomlTestWorks[idx], works[idx])
+		}
+	}
 }

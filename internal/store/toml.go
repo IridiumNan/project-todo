@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"strings"
 
 	"github.com/BurntSushi/toml"
 	"github.com/IridiumNan/project-todo/internal/models"
@@ -28,6 +29,12 @@ func (st *StoreToml) LoadMetadata(dataSrc io.Reader) (works []*models.Work, err 
 
 	for idx := range workParts {
 		var work models.Work
+
+		// skip invalid part
+		if workStr := strings.Trim(string(workParts[idx]), " \n\t"); workStr == models.EmptyStr {
+			continue
+		}
+
 		err = toml.Unmarshal(workParts[idx], &work)
 		if err != nil {
 			slog.Error("while unmarshal toml metadata", "err", err, "str", string(workParts[idx]))

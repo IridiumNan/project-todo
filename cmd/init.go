@@ -25,9 +25,9 @@ func execInit(cmd *cobra.Command, args []string) {
 	logFile := utils.SetGlobalLogger()
 	defer logFile.Close()
 
-	err := store.InitDataDir()
+	dataDir, err := store.InitDataDir()
 	if err != nil {
-		slog.Error("exec init failed", "err", err)
+		slog.Error("exec init failed", "err", err, "data_dir_path", dataDir)
 		return
 	}
 }
