@@ -18,7 +18,8 @@ type MDInjector struct {
 }
 
 // BuildWorksTable Build the work table content
-func (mi *MDInjector) BuildWorksTable(idTitleMap map[string]string) {
+// The idTitleMap comes from the [WorkBuilder.DataDir]
+func (mi *MDInjector) buildWorksTable(idTitleMap map[string]string) {
 	emptyTable := "There is no exist works"
 
 	if len(idTitleMap) == 0 {

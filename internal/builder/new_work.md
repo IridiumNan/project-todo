@@ -1,5 +1,5 @@
 +++
-title = ""
+title = "Test Work Build"
 # energy requirement for this work
 # energy low    0
 # energy medium 1

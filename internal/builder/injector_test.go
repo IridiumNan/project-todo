@@ -23,7 +23,7 @@ func TestMDTableInject(t *testing.T) {
 		"jfoaidfjaofd": "Haha",
 	}
 
-	mdInjector.BuildWorksTable(idTitleMap)
+	mdInjector.buildWorksTable(idTitleMap)
 
 	if got := mdInjector.Inject(newWorkMDTemplate); got != expectedWork {
 		t.Error("not match expected content")
