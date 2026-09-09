@@ -95,3 +95,20 @@ For this system, there is no need to use field Context and links or definition o
 ### Code
 
 See [demo.go](./demo.go)
+
+---
+
+## New Interface Design
+
+```go
+type TodoDB interface {
+    // Push new work into database then update the counter
+    Push()
+
+    // Pop fetch a work the this work blocked process, default done and update counter
+    Pop()
+
+    // Sync the map[string]*Work into disk file
+    Sync()
+}
+```
