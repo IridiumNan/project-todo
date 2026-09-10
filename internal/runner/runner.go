@@ -1,5 +1,5 @@
-// Package runner provide the struct which update work status then write log
-// And monitor the work status
+// Package runner defines the struct [WorkRunner] which is used to display and change status of work then write log into file
+// When a runner start a work, it will write metadata of this work into [models.DataDOINGTomlName]
 package runner
 
 import (
@@ -9,10 +9,15 @@ import (
 )
 
 // TODO: If this runner should manage multi works ?
+// NO, just a single work
 
-// WorkRunner is used to exec the work display command and monitor work status
+type WorkRunner interface {
+	Run() error
+}
+
+// WorkTomlRunner is used to exec the work display command and monitor work status
 // When this work' status changed, it write log into file
-type WorkRunner struct {
+type WorkTomlRunner struct {
 	Work *models.Work
 
 	Logger *slog.Logger
@@ -20,12 +25,12 @@ type WorkRunner struct {
 
 func NewWorkRunner() (*WorkRunner, error)
 
-// Run start the work then blocked, waiting for the user end this work
-func (wr *WorkRunner) Run() error {
+// Run starts the specified command and waits for it to complete.
+func (wr *WorkTomlRunner) Run() error {
 	return nil
 }
 
 // TODO: decide if this function should start work then not block terminal ?
-func (wt *WorkRunner) Start() error {
-	return nil
-}
+// func (wt *WorkTomlRunner) Start() error {
+// 	return nil
+// }

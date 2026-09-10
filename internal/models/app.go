@@ -9,8 +9,12 @@ const (
 	AppName        = "project-todo"
 	EmptyStr       = ""
 	DataDirName    = ".project-todo"
-	DataTomlName   = "data.toml"
 	ContextDirName = "context"
+
+	// Toml data file name
+	DataTODOTomlName  = "todo-data.toml"
+	DataDOINGTomlName = "doing-data.toml"
+	DataDONETomlName  = "done-data.toml"
 )
 
 var homeDir string = EmptyStr

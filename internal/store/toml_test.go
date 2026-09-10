@@ -2,9 +2,12 @@ package store
 
 import (
 	"fmt"
+	"log/slog"
 	"math/rand"
+	"testing"
 	"time"
 
+	"github.com/IridiumNan/project-todo/internal/builder"
 	"github.com/IridiumNan/project-todo/internal/models"
 	"github.com/IridiumNan/project-todo/internal/utils"
 )
@@ -56,12 +59,43 @@ func getTomlTestData(size int) (works []*models.Work) {
 	return
 }
 
-// func initTestDir(t *testing.T) {
-// 	dataDirPath, err := InitDataDirOnCurrentDir()
-// 	if err != nil {
-// 		t.Errorf("error when init data dir, err: %s", err)
-// 	}
-//
-// }
+func initTestDir(t *testing.T) (dataDirPath string) {
+	var err error
+	dataDirPath, err = InitDataDirOnCurrentDir()
+	if err != nil {
+		t.Errorf("error when init data dir, err: %s", err)
+	}
+
+	slog.Info("init data dir", "dir_path", dataDirPath)
+
+	return
+}
+
+func TestTomlPush(t *testing.T) {
+	dataDirPath := initTestDir(t)
+
+	td, err := NewTomlDB(dataDirPath)
+	if err != nil {
+		t.Errorf("error when create new toml db, err: %s", err)
+	}
+
+	conf := builder.MDTomlConfig{
+		Title:          "Test 0",
+		Energy:         models.EnergyLow,
+		Viewer:         models.ViewerBatPrint,
+		DependenciesID: []string{},
+	}
+
+	ctx := []byte("Test 0 context")
+
+	err = td.Push(&conf, ctx)
+	if err != nil {
+		t.Errorf("error when push new work, err: %s", err)
+	}
+
+	td.Pop(filter filter.WorkFilter)
+
+	// TODO:
+}
 
 // TODO: Write test for tomlDB

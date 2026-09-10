@@ -54,10 +54,10 @@ type Work struct {
 ```
 
 - BlockedWorksID
-This field store the work id which is blocked by current work.
+  This field store the work id which is blocked by current work.
 
 - BlockedTimes
-How many work block this work
+  How many work block this work
 
 **Update Process**
 
@@ -121,23 +121,43 @@ For this system, there is no need to use field Context and links or definition o
 - Atomic Step List (Workflow): The execution sequence
 - Definition of Done: The criteria for human confirm if a work is done.
 
-### Code
-
-See [demo.go](./demo.go)
-
 ---
 
 ## DataBase Interface Design
 
 ```go
 type TodoDB interface {
-    // Push new work into database then update the counter
-    Push()
+ // Push create a new work then build metadata from user input
+ // It generate an ID for this work then store the context file path and it's content on the memory until [TodoDB.Sync] is called
+ Push(conf *builder.MDTomlConfig, dependencies []string) (string, error)
 
-    // Pop fetch a work the this work blocked process, default done and update counter
-    Pop()
+ // Pop next Work
+ // If doing data file has work which is doing, pop it first
+ // else load todo data file then check if there is an available work
+ //
+ // This function will modify the pop work status from [models.StatusTODO] to [models.StatusDOING]
+ // Then update the work status on the memory
+ //
+ // You should call [TodoDB.Sync] function to update the data file status
+ Pop(filter *filter.WorkFilter) (*models.Work, error)
 
-    // Sync the map[string]*Work into disk file
-    Sync()
+ // Done Change work status from [models.StatusDOING] to [models.StatusDONE]
+ // then write this work metadata into data file
+ // data file name and path depends on the database format
+ // The work status will not be update on disk until function [TodoDB.Sync] is called
+ Done(work *models.Work) error
+
+ // Sync the function makes changes on memory saved to disk
+ // It contains the work metadata, context file for new work
+ Sync() error
 }
+```
+
+```mermaid
+graph TB
+    user_input_work_info --> | Push | StatusTODO
+    StatusTODO --> | Pop | StatusDOING
+    StatusDOING --> | Done | StatusDONE
+
+    Memory_update --> | Sync | Data_file_update
 ```

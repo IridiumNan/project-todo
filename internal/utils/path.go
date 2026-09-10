@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/IridiumNan/project-todo/internal/models"
 )
@@ -78,4 +79,12 @@ func isContainsDir(checkedPath string, targetDir string) bool {
 	}
 
 	return false
+}
+
+// ParseCtxPath return the id and title based on context file path
+func ParseCtxPath(ctxPath string) (id string, title string) {
+	ctxFileName := path.Base(ctxPath)
+	parts := strings.SplitN(ctxFileName, "-", 2)
+
+	return parts[0], parts[1]
 }
