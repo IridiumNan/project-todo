@@ -35,9 +35,11 @@ type Work struct {
 	Viewer ViewerType `toml:"viewer"`
 
 	// Time record for logging and work analysis
+	// Set by [store.TodoDB]
 	// Auto generated
 	CreateTime time.Time `toml:"create_time"`
 
+	// StartTime and EndTime should be set with [runner.WorkRunner]
 	StartTime time.Time `toml:"start_time"`
 
 	EndTime time.Time `toml:"end_time"`

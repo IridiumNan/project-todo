@@ -8,7 +8,7 @@ import (
 	"github.com/IridiumNan/project-todo/internal/models"
 )
 
-func isSameTomlConf(conf1 *mdTomlConfig, conf2 *mdTomlConfig) bool {
+func isSameTomlConf(conf1 *MDTomlConfig, conf2 *MDTomlConfig) bool {
 	if conf1.Title != conf2.Title {
 		return false
 	}
@@ -29,7 +29,7 @@ func isSameTomlConf(conf1 *mdTomlConfig, conf2 *mdTomlConfig) bool {
 }
 
 func TestParseFunc(t *testing.T) {
-	expectedTomlConf := mdTomlConfig{
+	expectedTomlConf := MDTomlConfig{
 		Title:          "Test Work Build",
 		Energy:         models.EnergyMedium,
 		Viewer:         models.ViewerEditor,
@@ -45,7 +45,7 @@ func TestParseFunc(t *testing.T) {
 
 	mdTomlConf, mdContext, err := mdParser.Parse(data)
 	if err != nil {
-		t.Errorf("encouter error when parse the markdown file, err: %s", err)
+		t.Errorf("encounter error when parse the markdown file, err: %s", err)
 	}
 
 	if !isSameTomlConf(mdTomlConf, &expectedTomlConf) {

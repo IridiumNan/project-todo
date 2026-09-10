@@ -6,10 +6,11 @@ import (
 )
 
 const (
-	AppName      = "project-todo"
-	EmptyStr     = ""
-	DataDirName  = ".project-todo"
-	DataTomlName = "data.toml"
+	AppName        = "project-todo"
+	EmptyStr       = ""
+	DataDirName    = ".project-todo"
+	DataTomlName   = "data.toml"
+	ContextDirName = "context"
 )
 
 var homeDir string = EmptyStr

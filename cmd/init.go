@@ -17,15 +17,31 @@ var initCmd = &cobra.Command{
 	Short: "init a project-todo on current dir",
 	Long: `This command will create a new dir for todo data storage
 	It will generate a new dir .project-todo.
-	You should use the command on the root dir of your project`,
+	You should use the command on the root dir of your project
+	USAGE: 
+	todo init
+	This method init the data dir on current dir
+
+	todo init /path/to/dir
+	This method init with current data dir`,
 	Run: execInit,
 }
 
 func execInit(cmd *cobra.Command, args []string) {
+	// NOTE: The cobra args not contains init itself
+	// If run `program init`, len(args) will be 0
 	logFile := utils.SetGlobalLogger()
 	defer logFile.Close()
 
-	dataDir, err := store.InitDataDir()
+	var dataDir string
+	var err error
+
+	if len(args) == 0 {
+		dataDir, err = store.InitDataDirOnCurrentDir()
+	} else {
+		err = store.InitDataDir(args[0])
+		dataDir = args[0]
+	}
 	if err != nil {
 		slog.Error("exec init failed", "err", err, "data_dir_path", dataDir)
 		return

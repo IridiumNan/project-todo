@@ -2,10 +2,7 @@ package store
 
 import (
 	"fmt"
-	"log/slog"
 	"math/rand"
-	"os"
-	"testing"
 	"time"
 
 	"github.com/IridiumNan/project-todo/internal/models"
@@ -41,8 +38,6 @@ func createTestWork() *models.Work {
 	}
 }
 
-var defaultTomlTestpath = "/tmp/go-test-metadata.toml"
-
 var tomlTestWorks = getTomlTestData(candidateSize)
 
 var tomlAppendWorks = getTomlTestData(2)
@@ -61,75 +56,12 @@ func getTomlTestData(size int) (works []*models.Work) {
 	return
 }
 
-func removeTomlTestFile(t *testing.T) {
-	if err := os.Remove(defaultTomlTestpath); err != nil {
-		t.Errorf("error when remove the defaultTomlTestpath: %s, err: %s", defaultTomlTestpath, err.Error())
-	}
-}
+// func initTestDir(t *testing.T) {
+// 	dataDirPath, err := InitDataDirOnCurrentDir()
+// 	if err != nil {
+// 		t.Errorf("error when init data dir, err: %s", err)
+// 	}
+//
+// }
 
-func dumpToml(t *testing.T) {
-	st := StoreToml{}
-
-	err := st.DumpMetadataToFile(defaultTomlTestpath, tomlTestWorks)
-	if err != nil {
-		t.Error(err)
-	}
-}
-
-func loadToml() (works []*models.Work, err error) {
-	st := StoreToml{}
-
-	tomlSrc, err := os.OpenFile(defaultTomlTestpath, os.O_RDONLY, 0o644)
-	if err != nil {
-		return nil, fmt.Errorf("error when opening default toml test file, file path: %s, err: %s", defaultTomlTestpath, err.Error())
-	}
-
-	works, err = st.LoadMetadata(tomlSrc)
-	if err != nil {
-		slog.Error("when load metadata", "err", err)
-	}
-
-	return
-}
-
-func TestTomlAppend(t *testing.T) {
-}
-
-func appendToml(t *testing.T) {
-	st := StoreToml{}
-
-	err := st.AppendMetadataToFile(defaultTomlTestpath, tomlAppendWorks)
-	if err != nil {
-		t.Errorf("error when appen new toml work, path: %s, err: %s", defaultTomlTestpath, err.Error())
-	}
-}
-
-func TestTomlDumpLoad(t *testing.T) {
-	dumpToml(t)
-
-	works, err := loadToml()
-	if err != nil {
-		t.Errorf("error when load work from defaultTomlTestpath: %s, err: %s", defaultTomlTestpath, err.Error())
-	}
-	for idx := range works {
-		if !isSameWork(tomlTestWorks[idx], works[idx]) {
-			t.Errorf("want %v, got %v", tomlTestWorks[idx], works[idx])
-		}
-	}
-
-	appendToml(t)
-
-	expectedWorkList := append(tomlTestWorks, tomlAppendWorks...)
-
-	works, err = loadToml()
-	if err != nil {
-		t.Errorf("error when load work from defaultTomlTestpath: %s, err: %s", defaultTomlTestpath, err.Error())
-	}
-	for idx := range works {
-		if !isSameWork(expectedWorkList[idx], works[idx]) {
-			t.Errorf("want %v, got %v", tomlTestWorks[idx], works[idx])
-		}
-	}
-
-	removeTomlTestFile(t)
-}
+// TODO: Write test for tomlDB

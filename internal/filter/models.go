@@ -15,6 +15,19 @@ func EnergyFilter(e models.Energy) WorkFilter {
 	}
 }
 
+func MultiFiler(filters ...WorkFilter) WorkFilter {
+	return func(w *models.Work) bool {
+		for _, f := range filters {
+			if !f(w) {
+				return false
+			}
+		}
+
+		return true
+	}
+}
+
+// TODO: Remove this, just use WorkFilter on database
 type WorkProvider struct {
 	AllWorks []*models.Work
 }
@@ -33,16 +46,4 @@ func (wp *WorkProvider) Provide(filter WorkFilter) *models.Work {
 		}
 	}
 	return nil
-}
-
-func MultiFiler(filters ...WorkFilter) WorkFilter {
-	return func(w *models.Work) bool {
-		for _, f := range filters {
-			if !f(w) {
-				return false
-			}
-		}
-
-		return true
-	}
 }
