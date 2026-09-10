@@ -1,6 +1,6 @@
 # Design of project-todo
 
-For a Computer Science student who loves programing and go school for job. High self-teaching level. The school task is not the core target. And it makes sense for he to create a customized todo-list for different task management about project development and learning some framework. It will focus on Tasks-Dependency Tree and energy-requirement about a task, which makes clean for him to manage a lot of tasks on school (which not suitable for project development.).
+This doc demonstrate the design of project-todo
 
 ## Data FlowChart
 
@@ -41,7 +41,36 @@ Just some click or copy-paste task which can be done almost everywhere.
 
 Some task has the dependencies which means you should do the previous task so that this task is available.
 
-TODO: Write about its' build and management.
+This work struct use `BlockedWorksID` and `BlockedTimes` to manage their dependencies relations.
+
+```go
+type Work struct {
+ // other fields...
+
+ BlockedWorksID []string
+
+ BlockedTimes int
+}
+```
+
+- BlockedWorksID
+This field store the work id which is blocked by current work.
+
+- BlockedTimes
+How many work block this work
+
+**Update Process**
+
+That's assume that Work A should be done before Work B begin
+
+So we will get `A { BlockedWorksID = [ "B" ], BlockedTimes = 0 }` and `B { BlockedWorksID = [], BlockedTimes = 1 }`
+
+Only work with BlockedTimes = 0 can be run now.
+So we start work A then for each BlockedWorksID on A, update the work BlockedTimes with BlockedTimes -= 1
+
+After that `B { BlockedTimes = 0 }` which means it can be started now.
+
+This design enable quick pop and single build. Which reach the requirement of this project.
 
 ---
 
@@ -98,7 +127,7 @@ See [demo.go](./demo.go)
 
 ---
 
-## New Interface Design
+## DataBase Interface Design
 
 ```go
 type TodoDB interface {
