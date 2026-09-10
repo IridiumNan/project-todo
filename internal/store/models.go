@@ -22,7 +22,7 @@ func generateTimestampID(inputTime time.Time) string {
 type TodoDB interface {
 	// Push create a new work then build metadata from user input
 	// It generate an ID for this work then store the context file path and it's content on the memory until [TodoDB.Sync] is called
-	Push(conf *builder.MDTomlConfig, dependencies []string) (string, error)
+	Push(conf *builder.MDTomlConfig, contextByte []byte) (string, error)
 
 	// Pop next Work
 	// If doing data file has work which is doing, pop it first
@@ -32,7 +32,7 @@ type TodoDB interface {
 	// Then update the work status on the memory
 	//
 	// You should call [TodoDB.Sync] function to update the data file status
-	Pop(filter *filter.WorkFilter) (*models.Work, error)
+	Pop(filter filter.WorkFilter) (*models.Work, error)
 
 	// Done Change work status from [models.StatusDOING] to [models.StatusDONE]
 	// then write this work metadata into data file
