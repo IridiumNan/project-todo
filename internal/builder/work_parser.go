@@ -9,17 +9,6 @@ import (
 	"github.com/IridiumNan/project-todo/internal/models"
 )
 
-// MDTomlConfig struct is used for UnMarshal raw markdown content
-type MDTomlConfig struct {
-	Title string `toml:"title"`
-
-	Energy models.Energy `toml:"energy"`
-
-	Viewer models.ViewerType `toml:"viewer"`
-
-	DependenciesID []string `toml:"dependencies_id"`
-}
-
 type MDWorkParser struct{}
 
 const (
@@ -27,9 +16,13 @@ const (
 	mdContextTitle = "## CONTEXT\n"
 )
 
+func NewMDWorkParser() MDWorkParser {
+	return MDWorkParser{}
+}
+
 // Parse parse the raw markdown file then return the mdTomlConf and mdContext
 // Then WorkBuilder use there data to build a new Work
-func (wp *MDWorkParser) Parse(rawMD []byte) (mdTomlConf *MDTomlConfig, mdContext []byte, err error) {
+func (wp MDWorkParser) Parse(rawMD []byte) (mdTomlConf *models.MDTomlConfig, mdContext []byte, err error) {
 	mdParts := bytes.SplitN(rawMD, []byte(mdDefaultSep), 3)
 
 	if len(mdParts) < 3 {
@@ -43,7 +36,7 @@ func (wp *MDWorkParser) Parse(rawMD []byte) (mdTomlConf *MDTomlConfig, mdContext
 
 	tomlConfigData := mdParts[1]
 
-	tomlConf := MDTomlConfig{}
+	tomlConf := models.MDTomlConfig{}
 
 	if err := toml.Unmarshal(tomlConfigData, &tomlConf); err != nil {
 		return nil, nil, fmt.Errorf("error when Unmarshal toml config byte data from the markdown parts, err: %s", err)

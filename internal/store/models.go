@@ -8,7 +8,6 @@ package store
 import (
 	"time"
 
-	"github.com/IridiumNan/project-todo/internal/builder"
 	"github.com/IridiumNan/project-todo/internal/filter"
 	"github.com/IridiumNan/project-todo/internal/models"
 	"github.com/IridiumNan/project-todo/internal/utils"
@@ -22,7 +21,7 @@ func generateTimestampID(inputTime time.Time) string {
 type TodoDB interface {
 	// Push create a new work then build metadata from user input
 	// It generate an ID for this work then store the context file path and it's content on the memory until [TodoDB.Sync] is called
-	Push(conf *builder.MDTomlConfig, contextByte []byte) (string, error)
+	Push(conf *models.MDTomlConfig, contextByte []byte) (string, error)
 
 	// Pop next Work
 	// If doing data file has work which is doing, pop it first

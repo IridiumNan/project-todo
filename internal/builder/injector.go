@@ -17,7 +17,7 @@ type MDInjector struct {
 	KeyContentMap map[string]string
 }
 
-// BuildWorksTable Build the work table content
+// buildWorksTable Build the work table content
 // The idTitleMap comes from the [WorkBuilder.DataDir]
 func (mi *MDInjector) buildWorksTable(idTitleMap map[string]string) {
 	emptyTable := "There is no exist works"
@@ -48,4 +48,12 @@ func (mi *MDInjector) Inject(rawStr string) (injectedStr string) {
 
 	injectedStr = rawStr
 	return
+}
+
+func NewMDInjector(idTitleMap map[string]string) *MDInjector {
+	mi := MDInjector{KeyContentMap: map[string]string{}}
+
+	mi.buildWorksTable(idTitleMap)
+
+	return &mi
 }

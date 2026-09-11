@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
-	"github.com/IridiumNan/project-todo/internal/builder"
 	"github.com/IridiumNan/project-todo/internal/filter"
 	"github.com/IridiumNan/project-todo/internal/models"
 	"github.com/IridiumNan/project-todo/internal/utils"
@@ -29,10 +28,10 @@ type metaWriteTaskFunc func() error
 // But it should not handle the status of work
 // The status of work should be managed by runner
 type TomlDB struct {
-	// todoWorks store id as key
+	// TodoWorks store id as key
 	// key is autogenerate by timestamp
 	// this map just store works with status [models.StatusTODO]
-	todoWorks map[string]*models.Work
+	TodoWorks map[string]*models.Work
 
 	// the data dir named .project-todo where [tomlDataFileName] and context dir is stored
 	DataDirPath string
@@ -72,21 +71,21 @@ func (td *TomlDB) delCtxWriteTask(CtxFilePath string, data []byte) {
 // This support prefix match
 func (td *TomlDB) resolvePushDependency(newID string, dependencies []string) {
 	for _, targetPrefix := range dependencies {
-		for id := range td.todoWorks {
+		for id := range td.TodoWorks {
 			// use prefix match
 			if strings.HasPrefix(id, targetPrefix) {
-				td.todoWorks[id].BlockedWorksID = append(td.todoWorks[id].BlockedWorksID, newID)
+				td.TodoWorks[id].BlockedWorksID = append(td.TodoWorks[id].BlockedWorksID, newID)
 			}
 		}
 	}
 }
 
 // Push -> See interface [TodoDB] Push
-func (td *TomlDB) Push(conf *builder.MDTomlConfig, contextByte []byte) error {
+func (td *TomlDB) Push(conf *models.MDTomlConfig, contextByte []byte) error {
 	now := time.Now()
 	newWorkID := generateTimestampID(now)
 
-	contextFileName := fmt.Sprintf("%s-%s", newWorkID, conf.Title)
+	contextFileName := fmt.Sprintf("%s-%s.md", newWorkID, conf.Title)
 	contextFilePath := path.Join(td.DataDirPath, models.ContextDirName, contextFileName)
 
 	td.resolvePushDependency(newWorkID, conf.DependenciesID)
@@ -110,7 +109,7 @@ func (td *TomlDB) Push(conf *builder.MDTomlConfig, contextByte []byte) error {
 		BlockedTimes:   len(conf.DependenciesID),
 	}
 
-	td.todoWorks[newWorkID] = &newWork
+	td.TodoWorks[newWorkID] = &newWork
 
 	// write this when [TomlDB.Sync] is called
 	td.addCtxWriteTask(contextFilePath, contextByte)
@@ -149,7 +148,7 @@ func (td *TomlDB) loadDoingWork() (*models.Work, error) {
 func (td *TomlDB) fetchWorkByFilter(filter filter.WorkFilter) (*models.Work, error) {
 	var work *models.Work
 
-	for _, todoWork := range td.todoWorks {
+	for _, todoWork := range td.TodoWorks {
 		if todoWork.BlockedTimes == 0 && filter(todoWork) {
 			work = todoWork
 		}
@@ -181,12 +180,12 @@ func (td *TomlDB) writeDoingWorkWhenPop(work models.Work) error {
 	// Done function should not load data from this file then check it.
 	err = os.WriteFile(doingFilePath, data, 0o644)
 	if err != nil {
-		// not delete this work from todoWorks to keep metadata save
+		// not delete this work from TodoWorks to keep metadata save
 		return fmt.Errorf("while writing data into doing file path, file_path: %s, err: %s", doingFilePath, err.Error())
 	}
 
-	// delete this work from todoWorks, it's metadata now is written on doingFilePath
-	delete(td.todoWorks, work.ID)
+	// delete this work from TodoWorks, it's metadata now is written on doingFilePath
+	delete(td.TodoWorks, work.ID)
 
 	return nil
 }
@@ -218,7 +217,7 @@ func (td *TomlDB) Pop(filter filter.WorkFilter) (*models.Work, error) {
 		slog.Error("while write doing work when pop", "err", err)
 	}
 
-	// this time todoWorks should not be sync to disk for data safety
+	// this time TodoWorks should not be sync to disk for data safety
 	// Before programs exit, call [TomlDB.Sync] to update
 
 	return work, nil
@@ -227,7 +226,7 @@ func (td *TomlDB) Pop(filter filter.WorkFilter) (*models.Work, error) {
 // resolveDoneDependency call this function when a work status changed from [models.StatusDOING] to [models.StatusDONE]
 func (td *TomlDB) resolveDoneDependency(blockedIDs []string) {
 	for _, id := range blockedIDs {
-		td.todoWorks[id].BlockedTimes -= 1
+		td.TodoWorks[id].BlockedTimes -= 1
 	}
 }
 
@@ -303,7 +302,7 @@ func (td *TomlDB) writeContext() (excludeID []string, errs []error) {
 }
 
 func (td *TomlDB) buildTomlByTodoWorks(excludeID []string) (byteData []byte) {
-	works := utils.MapValues(td.todoWorks)
+	works := utils.MapValues(td.TodoWorks)
 
 	return td.buildTomlByteData(works, excludeID)
 }
@@ -350,7 +349,7 @@ func NewTomlDB(dataDirPath string) (*TomlDB, error) {
 		}
 
 		return &TomlDB{
-			todoWorks:    map[string]*models.Work{},
+			TodoWorks:    map[string]*models.Work{},
 			DataDirPath:  dataDirPath,
 			ctxWriteTask: map[pathType][]byte{},
 		}, nil
@@ -378,7 +377,7 @@ func NewTomlDB(dataDirPath string) (*TomlDB, error) {
 	}
 
 	return &TomlDB{
-		todoWorks:   allTodoWorks,
+		TodoWorks:   allTodoWorks,
 		DataDirPath: dataDirPath,
 
 		ctxWriteTask: map[pathType][]byte{},

@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/IridiumNan/project-todo/internal/builder"
 	"github.com/IridiumNan/project-todo/internal/filter"
 	"github.com/IridiumNan/project-todo/internal/models"
 	"github.com/IridiumNan/project-todo/internal/utils"
@@ -89,7 +88,7 @@ func TestTomlPush(t *testing.T) {
 		t.Errorf("error when create new toml db, err: %s", err)
 	}
 
-	conf := builder.MDTomlConfig{
+	conf := models.MDTomlConfig{
 		Title:          "Test 0",
 		Energy:         models.EnergyLow,
 		Viewer:         models.ViewerBatPrint,
