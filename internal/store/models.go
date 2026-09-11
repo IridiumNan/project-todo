@@ -28,16 +28,11 @@ type TodoDB interface {
 	// If doing data file has work which is doing, pop it first
 	// else load todo data file then check if there is an available work
 	//
-	// This function will modify the pop work status from [models.StatusTODO] to [models.StatusDOING]
-	// Then update the work status on the memory
-	//
-	// You should call [TodoDB.Sync] function to update the data file status
+	// this function will not manage the status of work, the status update will be handled by runner
 	Pop(filter filter.WorkFilter) (*models.Work, error)
 
-	// Done Change work status from [models.StatusDOING] to [models.StatusDONE]
 	// then write this work metadata into data file
 	// data file name and path depends on the database format
-	// The work status will not be update on disk until function [TodoDB.Sync] is called
 	Done(work *models.Work) error
 
 	// Sync the function makes changes on memory saved to disk

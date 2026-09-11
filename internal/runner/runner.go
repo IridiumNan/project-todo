@@ -8,9 +8,6 @@ import (
 	"github.com/IridiumNan/project-todo/internal/models"
 )
 
-// TODO: If this runner should manage multi works ?
-// NO, just a single work
-
 type WorkRunner interface {
 	Run() error
 }
@@ -26,6 +23,8 @@ type WorkTomlRunner struct {
 func NewWorkRunner() (*WorkRunner, error)
 
 // Run starts the specified command and waits for it to complete.
+// NOTE: UPDATE THE WORK STATUS
+// START TIME AND END TIME OF WORK
 func (wr *WorkTomlRunner) Run() error {
 	return nil
 }
