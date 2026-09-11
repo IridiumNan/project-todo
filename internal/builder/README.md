@@ -28,3 +28,10 @@ graph LR
 
 - the context dir contains all context for every work
 To find the context for specific work, use metadata stored on toml file
+
+---
+
+> [!NOTE]
+> Because the go test doesn't hold a tty.
+> So the interactive editor can't be opened on `go test` command
+> You must build it then test manually
