@@ -31,8 +31,12 @@ func InitDataDir(dir string) (err error) {
 
 	err = os.Mkdir(dir, 0o755)
 	if err != nil {
-		slog.Error("creating date dir", "err", err, "data_dir_path", dir)
-		return err
+		if !os.IsExist(err) {
+			slog.Error("creating date dir", "err", err, "data_dir_path", dir)
+			return err
+		}
+		err = nil
+		slog.Warn("data dir exist", "path", dir)
 	}
 
 	slog.Info("init new project-todo data dir", "data_dir_path", dir)
@@ -41,8 +45,12 @@ func InitDataDir(dir string) (err error) {
 
 	err = os.Mkdir(contextPath, 0o755)
 	if err != nil {
-		slog.Error("creating context dir", "context_path", contextPath, "err", err)
-		return err
+		if !os.IsExist(err) {
+			slog.Error("creating context dir", "context_path", contextPath, "err", err)
+			return err
+		}
+		err = nil
+		slog.Warn("context dir exist", "path", dir)
 	}
 
 	slog.Info("creating context dir", "context_path", contextPath)

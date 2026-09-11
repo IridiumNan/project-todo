@@ -150,7 +150,7 @@ func (td *TomlDB) fetchWorkByFilter(filter filter.WorkFilter) (*models.Work, err
 	var work *models.Work
 
 	for _, todoWork := range td.todoWorks {
-		if todoWork.BlockedTimes == 0 && filter(work) {
+		if todoWork.BlockedTimes == 0 && filter(todoWork) {
 			work = todoWork
 		}
 	}
@@ -203,7 +203,7 @@ func (td *TomlDB) Pop(filter filter.WorkFilter) (*models.Work, error) {
 	}
 
 	if os.IsNotExist(err) {
-		slog.Info("not doing work found, try todo work")
+		slog.Info("no doing work found, try todo work")
 	}
 
 	slog.Warn("fail to load doing work from metadata", "err", err)
@@ -254,7 +254,8 @@ func (td *TomlDB) Done(work *models.Work) error {
 
 // Sync -> See interface [TodoDB] Sync
 func (td *TomlDB) Sync() error {
-	tmpFile, err := os.CreateTemp("/tmp", "project-todo-data-*")
+	tmpFile, err := os.CreateTemp(td.DataDirPath, "project-todo-data-*")
+	slog.Info("create a new tmp file for todo works", "path", tmpFile.Name())
 	if err != nil {
 		return fmt.Errorf("error when create tmp file, data file not changed, err: %s", err.Error())
 	}
@@ -277,6 +278,7 @@ func (td *TomlDB) Sync() error {
 
 	todoFilePath := path.Join(td.DataDirPath, models.DataTODOTomlName)
 	err = os.Rename(tmpFile.Name(), todoFilePath)
+	slog.Info("replace old todo file", "path", todoFilePath)
 	if err != nil {
 		return fmt.Errorf("error when replace data file with tmp file, tmp file path: %s, data file path: %s, err: %s", tmpFile.Name(), todoFilePath, err)
 	}
@@ -339,6 +341,20 @@ func NewTomlDB(dataDirPath string) (*TomlDB, error) {
 	dataFilePath := path.Join(dataDirPath, models.DataTODOTomlName)
 
 	byteData, err := os.ReadFile(dataFilePath)
+	if os.IsNotExist(err) {
+		slog.Info("toml data file not exist, create a new one", "path", dataFilePath)
+
+		_, err = os.Create(dataFilePath)
+		if err != nil {
+			return nil, fmt.Errorf("error when create a new toml data file, file_path: %s, err: %s", dataFilePath, err.Error())
+		}
+
+		return &TomlDB{
+			todoWorks:    map[string]*models.Work{},
+			DataDirPath:  dataDirPath,
+			ctxWriteTask: map[pathType][]byte{},
+		}, nil
+	}
 	if err != nil {
 		return nil, fmt.Errorf("error when read data file, file path: %s, err: %s", dataFilePath, err.Error())
 	}

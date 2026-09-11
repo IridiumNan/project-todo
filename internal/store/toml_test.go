@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"log/slog"
 	"math/rand"
+	"os"
 	"testing"
 	"time"
 
 	"github.com/IridiumNan/project-todo/internal/builder"
+	"github.com/IridiumNan/project-todo/internal/filter"
 	"github.com/IridiumNan/project-todo/internal/models"
 	"github.com/IridiumNan/project-todo/internal/utils"
 )
@@ -43,8 +45,7 @@ func createTestWork() *models.Work {
 
 var tomlTestWorks = getTomlTestData(candidateSize)
 
-var tomlAppendWorks = getTomlTestData(2)
-
+// isSameWork compare filed except Time
 func isSameWork(want *models.Work, got *models.Work) bool {
 	res := want.ID == got.ID && want.Title == got.Title && want.EnergyRequirement == got.EnergyRequirement && want.Status == got.Status && want.ContextPath == got.ContextPath && want.BlockedTimes == got.BlockedTimes
 
@@ -71,8 +72,17 @@ func initTestDir(t *testing.T) (dataDirPath string) {
 	return
 }
 
+func removeTestDir(dataDirPath string) error {
+	if err := os.RemoveAll(dataDirPath); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func TestTomlPush(t *testing.T) {
 	dataDirPath := initTestDir(t)
+	// defer removeTestDir(dataDirPath)
 
 	td, err := NewTomlDB(dataDirPath)
 	if err != nil {
@@ -93,9 +103,28 @@ func TestTomlPush(t *testing.T) {
 		t.Errorf("error when push new work, err: %s", err)
 	}
 
-	td.Pop(filter filter.WorkFilter)
+	err = td.Sync()
+	if err != nil {
+		t.Errorf("error when sync todo works into disk, err: %s", err)
+	}
 
-	// TODO:
+	oldWork, err := td.Pop(filter.EnergyFilter(models.EnergyLow))
+	slog.Info("first pop finished")
+	if err != nil {
+		t.Errorf("error when pop work, err: %s", err)
+	}
+
+	newTd, err := NewTomlDB(dataDirPath)
+	slog.Info("second td built")
+	if err != nil {
+		t.Errorf("error when create new toml db, err: %s", err)
+	}
+	work, err := newTd.Pop(filter.EnergyFilter(models.EnergyLow))
+	if err != nil {
+		t.Errorf("error when pop work, err: %s", err)
+	}
+
+	if !isSameWork(oldWork, work) {
+		t.Errorf("load same work failed, want: %v, got: %v", oldWork, work)
+	}
 }
-
-// TODO: Write test for tomlDB
