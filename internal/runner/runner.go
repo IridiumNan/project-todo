@@ -28,8 +28,3 @@ func NewWorkRunner() (*WorkRunner, error)
 func (wr *WorkTomlRunner) Run() error {
 	return nil
 }
-
-// TODO: decide if this function should start work then not block terminal ?
-// func (wt *WorkTomlRunner) Start() error {
-// 	return nil
-// }

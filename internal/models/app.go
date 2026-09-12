@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 	"os"
+	"strings"
 )
 
 const (
@@ -16,6 +17,21 @@ const (
 	DataDOINGTomlName = "doing-data.toml"
 	DataDONETomlName  = "done-data.toml"
 )
+
+const ProjectAppend = `This project is powered by IridiumNan
+See <https://github.com/IridiumNan/project-todo>`
+
+func ProjectAppendWithMDQuote() string {
+	parts := strings.Split(ProjectAppend, "\n")
+
+	out := ""
+
+	for _, p := range parts {
+		out += fmt.Sprintf("> %s\n", p)
+	}
+
+	return "\n\n---\n\n" + out
+}
 
 var homeDir string = EmptyStr
 

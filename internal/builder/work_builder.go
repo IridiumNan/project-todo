@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/IridiumNan/project-todo/internal/models"
 	"github.com/IridiumNan/project-todo/internal/store"
 	"github.com/IridiumNan/project-todo/internal/utils"
 )
@@ -77,7 +78,7 @@ func (wb *WorkTomlBuilder) Build() error {
 		if err != nil {
 			return fmt.Errorf("error when read byte data from md file before parsing it, err: %s", err.Error())
 		}
-		conf, mdCtx, err := NewMDWorkParser().Parse(byteData)
+		conf, rawMDCtx, err := NewMDWorkParser().Parse(byteData)
 		if err != nil {
 			slog.Error("error when parsing your config file, please edit it again", "err", err)
 
@@ -85,6 +86,7 @@ func (wb *WorkTomlBuilder) Build() error {
 			_, _ = blockReader.ReadString('\n')
 			continue
 		}
+		mdCtx := wb.buildMDCtx(conf, rawMDCtx)
 
 		err = td.Push(conf, mdCtx)
 		if err != nil {
@@ -94,6 +96,38 @@ func (wb *WorkTomlBuilder) Build() error {
 		td.Sync()
 		return nil
 	}
+}
+
+func (wb *WorkTomlBuilder) buildMDCtx(conf *models.MDTomlConfig, rawMDCtx []byte) (mdCtx []byte) {
+	prefix := wb.mdPrefix(conf)
+
+	mdCtx = append(mdCtx, prefix...)
+	mdCtx = append(mdCtx, rawMDCtx...)
+	mdCtx = append(mdCtx, []byte(models.ProjectAppendWithMDQuote())...)
+
+	return mdCtx
+}
+
+func (wb *WorkTomlBuilder) mdPrefix(conf *models.MDTomlConfig) []byte {
+	noteEnergyStr := `> [!NOTE]
+> energy requirement: %s`
+	title := fmt.Sprintf("# %s\n", conf.Title)
+
+	var energyStr string
+	switch conf.Energy {
+	case models.EnergyLow:
+		energyStr = "Low Energy"
+	case models.EnergyMedium:
+		energyStr = "Medium Energy"
+	case models.EnergyHigh:
+		energyStr = "High Energy"
+	}
+
+	energyInfo := fmt.Sprintf(noteEnergyStr, energyStr)
+
+	prefix := title + "\n" + energyInfo + "\n\n---\n\n"
+
+	return []byte(prefix)
 }
 
 func NewWorkTomlBuilder(dataDir string) *WorkTomlBuilder {
