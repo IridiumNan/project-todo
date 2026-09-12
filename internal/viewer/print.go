@@ -26,6 +26,10 @@ func (ppv *PlainPrintViewer) PathView(path string) error {
 	return nil
 }
 
+func NewPlainPrintViewer() *PlainPrintViewer {
+	return &PlainPrintViewer{}
+}
+
 // BatPrintViewer use bat command to view context or batcat (on ubuntu)
 type BatPrintViewer struct{}
 
@@ -46,4 +50,8 @@ func (bpv *BatPrintViewer) PathView(path string) error {
 
 	}
 	return nil
+}
+
+func NewBatPrintViewer() *BatPrintViewer {
+	return &BatPrintViewer{}
 }

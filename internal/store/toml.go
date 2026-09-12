@@ -22,7 +22,7 @@ const (
 
 type pathType string
 
-type metaWriteTaskFunc func() error
+//type metaWriteTaskFunc func() error
 
 // TomlDB provide the functions for Query, Update metadata file data
 // But it should not handle the status of work
@@ -84,7 +84,7 @@ func (td *TomlDB) resolvePushDependency(newID string, dependencies []string) (ma
 }
 
 // Push -> See interface [TodoDB] Push
-func (td *TomlDB) Push(conf *models.MDTomlConfig, contextByte []byte) error {
+func (td *TomlDB) Push(conf *models.MDTomlConfig, contextByte []byte) (id string, err error) {
 	now := time.Now()
 	newWorkID := generateTimestampID(now)
 
@@ -117,7 +117,7 @@ func (td *TomlDB) Push(conf *models.MDTomlConfig, contextByte []byte) error {
 	// write this when [TomlDB.Sync] is called
 	td.addCtxWriteTask(contextFilePath, contextByte)
 
-	return nil
+	return newWorkID, nil
 }
 
 // loadDoingWork load if doing file exist (which means that there is doing work now)
@@ -146,6 +146,33 @@ func (td *TomlDB) loadDoingWork() (*models.Work, error) {
 
 	slog.Info("load doing work success", "work_id", work.ID, "work_title", work.Title)
 	return &work, nil
+}
+
+func (td *TomlDB) removeDoingWorkIfDone(work *models.Work) {
+	doingFilePath := path.Join(td.DataDirPath, models.DataDOINGTomlName)
+	doingWork, err := td.loadDoingWork()
+	if err != nil {
+		slog.Warn("failed to load doing work from file, remove the doing work status file", "file_path", doingFilePath, "err", err)
+		err = os.Remove(doingFilePath)
+		if err != nil {
+			slog.Error("removing doing file: failed to remove", "file_path", doingFilePath, "err", err)
+			return
+		}
+		return
+	}
+
+	if doingWork.ID == work.ID {
+		slog.Info("doing work has done, remove this file", "file_path", doingFilePath)
+
+		err = os.Remove(doingFilePath)
+		if err != nil {
+			slog.Error("removing doing file: failed to remove", "file_path", doingFilePath, "err", err)
+			return
+		}
+		return
+	}
+
+	slog.Warn("doing work and done work not match, keep doing work file", "doing_work_id", doingWork.ID, "doing_work_title", doingWork.Title)
 }
 
 func (td *TomlDB) fetchWorkByFilter(filter filter.WorkFilter) (*models.Work, error) {
@@ -233,9 +260,13 @@ func (td *TomlDB) resolveDoneDependency(blockedIDs []string) {
 	}
 }
 
+// Done resolve the dependency and update BlockedTimes for other works
+// Then append this work to done file
 func (td *TomlDB) Done(work *models.Work) error {
 	// update BlockedTimes for blocked works
 	td.resolveDoneDependency(work.BlockedWorksID)
+
+	td.removeDoingWorkIfDone(work)
 
 	// append this work into metadata file which contains all done work
 	doneFilePath := path.Join(td.DataDirPath, models.DataDONETomlName)
@@ -248,10 +279,10 @@ func (td *TomlDB) Done(work *models.Work) error {
 
 	_, err = doneFile.Write(data)
 	if err != nil {
-		return fmt.Errorf("error when write data into done file, err: %s", err)
+		return fmt.Errorf("Done: error when write data into done file, err: %s", err)
 	}
 
-	return nil
+	return td.Sync()
 }
 
 // Sync -> See interface [TodoDB] Sync

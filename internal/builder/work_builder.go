@@ -88,7 +88,7 @@ func (wb *WorkTomlBuilder) Build() error {
 		}
 		mdCtx := wb.buildMDCtx(conf, rawMDCtx)
 
-		err = td.Push(conf, mdCtx)
+		_, err = td.Push(conf, mdCtx)
 		if err != nil {
 			return fmt.Errorf("error when push new work, err: %s", err.Error())
 		}

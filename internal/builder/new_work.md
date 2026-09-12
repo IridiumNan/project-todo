@@ -1,5 +1,5 @@
 +++
-title = "Test Work Build"
+title = "Your Work Title"
 # energy requirement for this work
 # energy low    0
 # energy medium 1
@@ -16,7 +16,8 @@ viewer = 0
 # dependencies work id
 # Demonstrate that this work depends on these works and it should not start before all this works is done
 # Prefix match is supported
-dependencies_id = [ "abc", "cdf" ]
+# write as [ "id1_prefix", "id2_prefix" ]
+dependencies_id = []
 
 +++
 

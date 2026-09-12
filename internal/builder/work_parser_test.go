@@ -30,10 +30,10 @@ func isSameTomlConf(conf1 *models.MDTomlConfig, conf2 *models.MDTomlConfig) bool
 
 func TestParseFunc(t *testing.T) {
 	expectedTomlConf := models.MDTomlConfig{
-		Title:          "Test Work Build",
+		Title:          "Your Work Title",
 		Energy:         models.EnergyMedium,
 		Viewer:         models.ViewerEditor,
-		DependenciesID: []string{"abc", "cdf"},
+		DependenciesID: []string{},
 	}
 
 	mdParser := MDWorkParser{}

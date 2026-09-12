@@ -7,8 +7,7 @@
 default_viewer = 0
 
 # when a work context viewer is editor viewer, system will try to exec command one by one
-# %s will be replaced by context file path
 editor_view_commands = [
-    "nano %s",
-    "vim %s"
+    "nano",
+    "vim"
 ]

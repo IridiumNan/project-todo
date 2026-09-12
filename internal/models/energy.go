@@ -6,4 +6,6 @@ const (
 	EnergyLow Energy = iota
 	EnergyMedium
 	EnergyHigh
+
+	EnergyInvalid
 )

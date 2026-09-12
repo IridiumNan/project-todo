@@ -10,6 +10,7 @@ const (
 	AppName        = "project-todo"
 	EmptyStr       = ""
 	DataDirName    = ".project-todo"
+	DataDirLogName = "log"
 	ContextDirName = "context"
 
 	// Toml data file name

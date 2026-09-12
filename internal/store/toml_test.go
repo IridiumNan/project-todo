@@ -97,7 +97,7 @@ func TestTomlPush(t *testing.T) {
 
 	ctx := []byte("Test 0 context")
 
-	err = td.Push(&conf, ctx)
+	_, err = td.Push(&conf, ctx)
 	if err != nil {
 		t.Errorf("error when push new work, err: %s", err)
 	}

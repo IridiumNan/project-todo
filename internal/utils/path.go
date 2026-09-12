@@ -38,6 +38,16 @@ const (
 	emptyPath      = ""
 )
 
+// SearchBeginCurrentDir call the function [SearchDataDir] with parameter (os.Getwd)
+func SearchBeginCurrentDir() (foundPath string, err error) {
+	pwd, err := os.Getwd()
+	if err != nil {
+		return emptyPath, fmt.Errorf("error when get current dir path, err: %s", err)
+	}
+
+	return SearchDataDir(pwd)
+}
+
 // SearchDataDir search the dataDir [models.DataDirName]
 // with [maxSearchDepth], if not found, it will return [os.ErrNotExist]
 func SearchDataDir(startDir string) (foundPath string, err error) {

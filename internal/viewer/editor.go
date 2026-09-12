@@ -2,9 +2,9 @@ package viewer
 
 import (
 	"fmt"
-	"os"
-	"os/exec"
-	"strings"
+	"log/slog"
+
+	"github.com/IridiumNan/project-todo/internal/utils"
 )
 
 // ContextViewer for view context file
@@ -25,7 +25,7 @@ type ContextViewer interface {
 // It doesn't handle docx, doc or png files
 type EditorViewer struct {
 	// ViewCommands should be a shell command which receive a file path then display it's markdown content
-	// For instance, nvim %s, marktext %s, helix %s ...
+	// For instance, nvim, marktext, helix ...
 	// It support customization on toml configuration file
 	ViewCommands []string
 }
@@ -36,10 +36,12 @@ type EditorViewer struct {
 func (ev *EditorViewer) PathView(path string) error {
 	var err error
 	for _, viewCmd := range ev.ViewCommands {
-		shellCmd := fmt.Sprintf(viewCmd, path)
-		if err = ev.tryShellCmd(shellCmd); err == nil {
+		err := utils.OpenWithProgram(viewCmd, path)
+		// if err == nil, view complete then just return
+		if err == nil {
 			return nil
 		}
+		slog.Warn("while viewing context", "err", err)
 	}
 
 	return fmt.Errorf("error when open with editor viewer: %s", err.Error())
@@ -47,19 +49,27 @@ func (ev *EditorViewer) PathView(path string) error {
 
 // tryShellCmd try to exec shellCmd
 // This is for editor viewer opening the context file
-func (ev *EditorViewer) tryShellCmd(shellCmd string) error {
-	cmdParts := strings.Split(shellCmd, " ")
+// FIX: Don't use this shell cmd because there should be space on the path to context file
+// This function should be deprecated
+// func (ev *EditorViewer) tryShellCmd(shellCmd string) error {
+// 	cmdParts := strings.Split(shellCmd, " ")
+//
+// 	cmd := exec.Command(cmdParts[0], cmdParts[1:]...)
+//
+// 	cmd.Stdin = os.Stdin
+// 	cmd.Stdout = os.Stdout
+// 	cmd.Stderr = os.Stderr
+//
+// 	err := cmd.Run()
+// 	if err != nil {
+// 		return fmt.Errorf("view command: %s, err: %s", shellCmd, err.Error())
+// 	}
+//
+// 	return nil
+// }
 
-	cmd := exec.Command(cmdParts[0], cmdParts[1:]...)
-
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	err := cmd.Run()
-	if err != nil {
-		return fmt.Errorf("view command: %s, err: %s", shellCmd, err.Error())
+func NewEditorViewer(commands []string) *EditorViewer {
+	return &EditorViewer{
+		ViewCommands: commands,
 	}
-
-	return nil
 }
