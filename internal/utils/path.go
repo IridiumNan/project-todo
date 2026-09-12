@@ -38,6 +38,12 @@ const (
 	emptyPath      = ""
 )
 
+// SearchDataDir search the dataDir [models.DataDirName]
+// with [maxSearchDepth], if not found, it will return [os.ErrNotExist]
+func SearchDataDir(startDir string) (foundPath string, err error) {
+	return SearchDir(models.DataDirName, startDir)
+}
+
 // SearchDir search for target dir
 // begin with startDir
 // if you want to begin with current dir, use [os.Getwd]
@@ -51,7 +57,7 @@ func SearchDir(targetDir string, startDir string) (foundPath string, err error) 
 
 	for searchCount <= maxSearchDepth && currPath != rootDir {
 		if isContainsDir(currPath, targetDir) {
-			return currPath, nil
+			return path.Join(currPath, models.DataDirName), nil
 		}
 
 		slog.Debug("data dir not found for current path, checking next", "current_path", currPath, "target", models.DataDirName)

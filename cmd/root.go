@@ -11,7 +11,7 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "project-todo",
+	Use:   "todo",
 	Short: "A terminal tool for store and manage project todo list by Energy",
 	Long: `The project-todo will store your todo works then support dependencies tree build.
 	You provide your energy status then it will pop an avialable work suitable for now.

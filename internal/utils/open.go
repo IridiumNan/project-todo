@@ -9,11 +9,11 @@ import (
 	"github.com/IridiumNan/project-todo/internal/models"
 )
 
-func OpenWithEnvEditor(filePath string) error {
+func OpenWithEnvEditor(filePath string, defaultEditor string) error {
 	editor := os.Getenv("EDITOR")
 	if editor == models.EmptyStr {
-		slog.Warn("env variable EDITOR NOT SET, use vim as default editor")
-		editor = "vim"
+		slog.Warn("env variable EDITOR NOT SET, use default editor", "default_editor", defaultEditor)
+		editor = defaultEditor
 	}
 	return OpenWithProgram(editor, filePath)
 }

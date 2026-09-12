@@ -21,11 +21,11 @@ func getXDGStateDir() string {
 	return path.Join(homeDir, ".local", "state")
 }
 
-func getDefaultLogPath() string {
+func GetDefaultLogPath() string {
 	return path.Join(getXDGStateDir(), models.AppName, "log")
 }
 
-var defaultLogPath = getDefaultLogPath()
+var defaultLogPath = GetDefaultLogPath()
 
 // defaultGlobalLogger return the Logger with multiWrite
 // the writer contains Stdout and [defaultLogPath]
@@ -43,6 +43,8 @@ func defaultGlobalLogger() (logger *slog.Logger, logFile io.Closer) {
 	multiWriter := io.MultiWriter(os.Stdout, defaultLogFile)
 
 	textHandler := slog.NewTextHandler(multiWriter, &slog.HandlerOptions{})
+
+	slog.Info("init logger", "log_file_path", defaultLogPath)
 	return slog.New(textHandler), defaultLogFile
 }
 
