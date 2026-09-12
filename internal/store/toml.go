@@ -69,15 +69,18 @@ func (td *TomlDB) delCtxWriteTask(CtxFilePath string, data []byte) {
 // resolvePushDependency when a new work is pushed, resolve the dependencies
 // That's push new id into it's dependency [models.Work.BlockedWorksID]
 // This support prefix match
-func (td *TomlDB) resolvePushDependency(newID string, dependencies []string) {
+func (td *TomlDB) resolvePushDependency(newID string, dependencies []string) (matchCount int) {
+	matchCount = 0
 	for _, targetPrefix := range dependencies {
 		for id := range td.TodoWorks {
 			// use prefix match
 			if strings.HasPrefix(id, targetPrefix) {
 				td.TodoWorks[id].BlockedWorksID = append(td.TodoWorks[id].BlockedWorksID, newID)
+				matchCount++
 			}
 		}
 	}
+	return
 }
 
 // Push -> See interface [TodoDB] Push
@@ -88,7 +91,7 @@ func (td *TomlDB) Push(conf *models.MDTomlConfig, contextByte []byte) error {
 	contextFileName := fmt.Sprintf("%s-%s.md", newWorkID, conf.Title)
 	contextFilePath := path.Join(td.DataDirPath, models.ContextDirName, contextFileName)
 
-	td.resolvePushDependency(newWorkID, conf.DependenciesID)
+	blockedTimes := td.resolvePushDependency(newWorkID, conf.DependenciesID)
 
 	newWork := models.Work{
 		ID:                newWorkID,
@@ -106,7 +109,7 @@ func (td *TomlDB) Push(conf *models.MDTomlConfig, contextByte []byte) error {
 		StartTime:      now,
 		EndTime:        now,
 		BlockedWorksID: []string{},
-		BlockedTimes:   len(conf.DependenciesID),
+		BlockedTimes:   blockedTimes,
 	}
 
 	td.TodoWorks[newWorkID] = &newWork
