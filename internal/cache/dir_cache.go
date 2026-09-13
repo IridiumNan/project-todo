@@ -86,7 +86,6 @@ func (c *DirCache) PushNewDir(dataDirPath string) error {
 // It will trunc this cache file, remember to add old dirs on newDirs
 func (c *DirCache) updateCacheFile(newDirs []string) error {
 	strData := strings.Builder{}
-	strData.Grow(1 << 5)
 
 	cleanDirs := c.delNotExistDirs(newDirs)
 
@@ -116,7 +115,7 @@ func (c *DirCache) updateCacheFile(newDirs []string) error {
 
 // delNotExistDirs return the clean dirs which not contains any not exist dir or not readable dir
 func (c *DirCache) delNotExistDirs(dirs []string) []string {
-	cleanDirs := make([]string, len(dirs))
+	cleanDirs := []string{}
 	for _, dir := range dirs {
 		if _, err := os.Stat(dir); err == nil {
 			cleanDirs = append(cleanDirs, dir)
@@ -149,6 +148,8 @@ func (c *DirCache) Dirs() ([]string, error) {
 		}
 	}
 
+	// slog.Info("Dirs: load dir", "cleanDirs", cleanDirs)
+
 	return cleanDirs, nil
 }
 
@@ -166,6 +167,5 @@ func NewCache(cacheFilePath string) (*DirCache, error) {
 
 // DefaultCache return the DirCache with cacheFilePath = [DefaultDirCacheFilePath]
 func DefaultCache() (*DirCache, error) {
-	slog.Info("create default cache", "path", DefaultDirCacheFilePath)
 	return NewCache(DefaultDirCacheFilePath)
 }

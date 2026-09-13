@@ -33,6 +33,8 @@ func clearTestDirs(t *testing.T) {
 			t.Errorf("error when clear test dirs, err: %s", err.Error())
 		}
 	}
+
+	os.RemoveAll(DefaultDirCacheFilePath)
 }
 
 func TestPushNewDir(t *testing.T) {
