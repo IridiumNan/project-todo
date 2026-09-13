@@ -94,7 +94,7 @@ func (c *DirCache) updateCacheFile(newDirs []string) error {
 		strData.WriteString(str)
 	}
 
-	slog.Info("checking strData", "strData", strData.String())
+	// slog.Info("checking strData", "strData", strData.String())
 
 	cacheFile, err := os.OpenFile(c.cacheFilePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
 	if err != nil {
@@ -121,7 +121,7 @@ func (c *DirCache) delNotExistDirs(dirs []string) []string {
 			cleanDirs = append(cleanDirs, dir)
 		}
 	}
-	slog.Info("checking clean dirs", "dirs", cleanDirs)
+	// slog.Info("checking clean dirs", "dirs", cleanDirs)
 	return cleanDirs
 }
 
@@ -147,8 +147,6 @@ func (c *DirCache) Dirs() ([]string, error) {
 			cleanDirs = append(cleanDirs, dirs[idx])
 		}
 	}
-
-	// slog.Info("Dirs: load dir", "cleanDirs", cleanDirs)
 
 	return cleanDirs, nil
 }
