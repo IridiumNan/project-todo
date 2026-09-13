@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/IridiumNan/project-todo/internal/cache"
 	"github.com/IridiumNan/project-todo/internal/filter"
 	"github.com/IridiumNan/project-todo/internal/models"
 	"github.com/IridiumNan/project-todo/internal/runner"
@@ -38,6 +39,9 @@ func execNext(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
+	logFile := utils.SetGlobalLogger()
+	defer logFile.Close()
+
 	e := parseEnergyInput(energyStr)
 	if e == models.EnergyInvalid {
 		slog.Error("while parse energy string", "err", err)
@@ -48,17 +52,22 @@ func execNext(cmd *cobra.Command, args []string) {
 
 	dataDir, err := utils.SearchBeginCurrentDir()
 	if err != nil {
-		slog.Error("error when search data dir, please check if you have init your project with todo init command", "err", err)
-		os.Exit(1)
+		// slog.Error("error when search data dir, please check if you have init your project with todo init command", "err", err)
+		slog.Error("error when search data dir, try to use global cached dir")
+		dataDir = getCacheDir()
 	}
 
+	nextOnDir(f, dataDir)
+}
+
+func nextOnDir(filter filter.WorkFilter, dataDir string) {
 	td, err := store.NewTomlDB(dataDir)
 	if err != nil {
 		slog.Error("error when create a new toml database connection", "err", err)
 		os.Exit(1)
 	}
 
-	work, err := td.Pop(f)
+	work, err := td.Pop(filter)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -72,6 +81,15 @@ func execNext(cmd *cobra.Command, args []string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func getCacheDir() (dataDir string) {
+	dirCache, err := cache.DefaultCache()
+	if err != nil {
+		slog.Error("when init dir cache", "err", err)
+	}
+
+	return dirCache.SelectWithFzf()
 }
 
 func dataDirWriter(dataDir string) (out io.Writer, file io.Closer) {

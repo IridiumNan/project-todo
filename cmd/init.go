@@ -4,8 +4,11 @@ Copyright © 2026 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"fmt"
 	"log/slog"
+	"os"
 
+	"github.com/IridiumNan/project-todo/internal/cache"
 	"github.com/IridiumNan/project-todo/internal/store"
 	"github.com/IridiumNan/project-todo/internal/utils"
 	"github.com/spf13/cobra"
@@ -43,9 +46,25 @@ func execInit(cmd *cobra.Command, args []string) {
 		dataDir = args[0]
 	}
 	if err != nil {
-		slog.Error("exec init failed", "err", err, "data_dir_path", dataDir)
+		if os.IsExist(err) {
+			fmt.Println("\nData dir has existed on current dir, ignore init command\n\n")
+		} else {
+			slog.Error("error when init data dir", "err", err)
+		}
+	}
+
+	dirCache, err := cache.DefaultCache()
+	if err != nil {
+		slog.Error("creating a new dir cache", "err", err)
+	}
+
+	err = dirCache.PushNewDir(dataDir)
+	if err != nil {
+		slog.Error("pushing current data dir into cache file", "err", err)
 		return
 	}
+
+	slog.Info("caching current data dir to cache file", "data_dir", dataDir, "cache_path", cache.DefaultDirCacheFilePath)
 }
 
 func init() {

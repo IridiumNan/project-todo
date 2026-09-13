@@ -51,12 +51,14 @@ func (c *DirCache) SelectWithFzf() (dataDirPath string) {
 
 	fzfCmd := exec.Command("fzf")
 
-	var selectedBuf *bytes.Buffer
+	var selectedBuf bytes.Buffer
 
 	fzfCmd.Stdin = buf
-	fzfCmd.Stdout = selectedBuf
+	fzfCmd.Stdout = &selectedBuf
 
-	return selectedBuf.String()
+	fzfCmd.Run()
+
+	return strings.Trim(selectedBuf.String(), "\n\t ")
 }
 
 // PushNewDir add a new data dir path into cache file

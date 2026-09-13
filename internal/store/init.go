@@ -51,6 +51,7 @@ func InitDataDir(dir string) (err error) {
 		}
 		err = nil
 		slog.Warn("context dir exist", "path", dir)
+		return os.ErrExist
 	}
 
 	slog.Info("creating context dir", "context_path", contextPath)
