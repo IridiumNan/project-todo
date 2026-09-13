@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/IridiumNan/project-todo/internal/models"
 	"github.com/IridiumNan/project-todo/internal/utils"
 	"github.com/spf13/cobra"
 )
@@ -48,7 +49,7 @@ func execLog(cmd *cobra.Command, args []string) {
 }
 
 func openLogWithEditor() error {
-	err := utils.OpenWithEnvEditor(utils.GetDefaultLogPath(), "vim")
+	err := utils.OpenWithEnvEditor(utils.GetDefaultLogPath(), "vim", utils.ModeEdit)
 	if err != nil {
 		return fmt.Errorf("error when open log file with env editor, err: %s", err)
 	}
@@ -57,7 +58,7 @@ func openLogWithEditor() error {
 }
 
 func openLogWithProgram(program string) error {
-	err := utils.OpenWithProgram(program, utils.GetDefaultLogPath())
+	err := utils.OpenWithProgram(program, utils.GetDefaultLogPath(), models.EmptyStr)
 	if err != nil {
 		return fmt.Errorf("error when open log file with program, program: %s, err: %s", program, err)
 	}

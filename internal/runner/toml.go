@@ -69,6 +69,7 @@ func (r *WorkTomlRunner) Wait() (done bool) {
 	reader := bufio.NewReader(os.Stdin)
 	prompt := "todo-work ->"
 	fmt.Println("type help for help manual")
+	fmt.Println(runnerHelp)
 
 	exitWithoutDoneCmd := []string{"quit"}
 	for {
@@ -96,11 +97,14 @@ func (r *WorkTomlRunner) execCmd(cmd string) {
 		r.execHelp()
 	case "view":
 		r.execView()
+	case "edit":
+		r.execEdit()
 	}
 }
 
-const runnerHelp = `===== Help =====
-	view	open context file with viewer
+const runnerHelp = `========== Help ==========
+	view	open context file with viewer (read-only)
+	edit	open context file with editor then edit it
 	done	mark this work as done status then exit
 	quit	exit without mark this work as done
 	help	print help manual
@@ -113,6 +117,14 @@ func (r *WorkTomlRunner) execHelp() {
 
 func (r *WorkTomlRunner) execView() {
 	err := r.Viewer.PathView(r.Work.ContextPath)
+	if err != nil {
+		r.Logger.Error("while opening context file with viewer", "err", err)
+		fmt.Println("error when open context with viewer: ", err)
+	}
+}
+
+func (r *WorkTomlRunner) execEdit() {
+	err := r.Viewer.PathEdit(r.Work.ContextPath)
 	if err != nil {
 		r.Logger.Error("while opening context file with viewer", "err", err)
 		fmt.Println("error when open context with viewer: ", err)

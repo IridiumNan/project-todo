@@ -61,7 +61,7 @@ func (wb *WorkTomlBuilder) Build() error {
 		return fmt.Errorf("error when build markdown template, err: %s", err)
 	}
 
-	err = utils.OpenWithEnvEditor(mdFile.Name(), "vim")
+	err = utils.OpenWithEnvEditor(mdFile.Name(), "vim", utils.ModeEdit)
 	if err != nil {
 		return fmt.Errorf("error when open with environment editor, err: %s", err)
 	}

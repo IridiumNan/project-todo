@@ -14,7 +14,12 @@ import (
 type ContextViewer interface {
 	// PathView receive the stored context file path
 	// Then display it by specific method
-	PathView(path string) error
+	// This function will open the context file read-only
+	PathView(ctxPath string) error
+
+	// PathView open context file directly
+	// User can edit this context file
+	PathEdit(ctxPath string) error
 
 	// StrView receive the content of whole context file
 	// Usually formats or colors it for display
@@ -33,10 +38,23 @@ type EditorViewer struct {
 // PathView for EditorViewer
 // use the editor to open context file
 // It will try the ViewCommands one by one
-func (ev *EditorViewer) PathView(path string) error {
+func (ev *EditorViewer) PathView(ctxPath string) error {
+	return ev.pathOpen(ctxPath, utils.ModeRead)
+}
+
+func (ev *EditorViewer) PathEdit(ctxPath string) error {
+	return ev.pathOpen(ctxPath, utils.ModeEdit)
+}
+
+func (ev *EditorViewer) pathOpen(ctxPath string, mode utils.OpenMode) error {
 	var err error
 	for _, viewCmd := range ev.ViewCommands {
-		err := utils.OpenWithProgram(viewCmd, path)
+		switch mode {
+		case utils.ModeEdit:
+			err = utils.OpenWithProgram(viewCmd, ctxPath, utils.NoFlag)
+		case utils.ModeRead:
+			err = utils.OpenWithProgram(viewCmd, ctxPath, utils.GetReadOnlyFlag(viewCmd))
+		}
 		// if err == nil, view complete then just return
 		if err == nil {
 			return nil
@@ -46,27 +64,6 @@ func (ev *EditorViewer) PathView(path string) error {
 
 	return fmt.Errorf("error when open with editor viewer: %s", err.Error())
 }
-
-// tryShellCmd try to exec shellCmd
-// This is for editor viewer opening the context file
-// FIX: Don't use this shell cmd because there should be space on the path to context file
-// This function should be deprecated
-// func (ev *EditorViewer) tryShellCmd(shellCmd string) error {
-// 	cmdParts := strings.Split(shellCmd, " ")
-//
-// 	cmd := exec.Command(cmdParts[0], cmdParts[1:]...)
-//
-// 	cmd.Stdin = os.Stdin
-// 	cmd.Stdout = os.Stdout
-// 	cmd.Stderr = os.Stderr
-//
-// 	err := cmd.Run()
-// 	if err != nil {
-// 		return fmt.Errorf("view command: %s, err: %s", shellCmd, err.Error())
-// 	}
-//
-// 	return nil
-// }
 
 func NewEditorViewer(commands []string) *EditorViewer {
 	return &EditorViewer{

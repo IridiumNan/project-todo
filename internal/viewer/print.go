@@ -1,10 +1,12 @@
 package viewer
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
 
+	"github.com/IridiumNan/project-todo/internal/models"
 	"github.com/IridiumNan/project-todo/internal/utils"
 )
 
@@ -26,6 +28,10 @@ func (ppv *PlainPrintViewer) PathView(path string) error {
 	return nil
 }
 
+func (ppv *PlainPrintViewer) PathEdit(ctxPath string) error {
+	return errors.New("PlainPrintViewer not support edit")
+}
+
 func NewPlainPrintViewer() *PlainPrintViewer {
 	return &PlainPrintViewer{}
 }
@@ -39,17 +45,21 @@ func (bpv *BatPrintViewer) PathView(path string) error {
 	// try bat command first
 	// if failed, try batcat (for ubuntu)
 
-	err := utils.OpenWithProgram("bat", path)
+	err := utils.OpenWithProgram("bat", path, models.EmptyStr)
 	if err != nil {
 		slog.Warn("while try to view context with bat command. Try to use batcat", "err", err)
 
-		err = utils.OpenWithProgram("batcat", path)
+		err = utils.OpenWithProgram("batcat", path, models.EmptyStr)
 		if err != nil {
 			return fmt.Errorf("failed to view context with bat command, both batcat failed", "err", err)
 		}
 
 	}
 	return nil
+}
+
+func (bpv *BatPrintViewer) PathEdit(ctxPath string) error {
+	return errors.New("BatPrintViewer not support edit")
 }
 
 func NewBatPrintViewer() *BatPrintViewer {

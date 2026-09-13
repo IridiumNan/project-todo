@@ -24,7 +24,7 @@ var configCmd = &cobra.Command{
 func execConfig(cmd *cobra.Command, args []string) {
 	configFilePath := path.Join(config.APPConfigDir, config.ConfigFileName)
 
-	err := utils.OpenWithEnvEditor(configFilePath, "vim")
+	err := utils.OpenWithEnvEditor(configFilePath, "vim", utils.ModeEdit)
 	if err != nil {
 		log.Fatal(err)
 	}
