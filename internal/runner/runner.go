@@ -3,5 +3,9 @@
 package runner
 
 type WorkRunner interface {
+	// Run function start this work runner then wait until exit command
 	Run() error
+
+	// Wait function wait utils exit command
+	Wait() (done bool)
 }

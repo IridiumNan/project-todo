@@ -11,68 +11,90 @@ import (
 	"time"
 
 	"github.com/IridiumNan/project-todo/internal/config"
+	"github.com/IridiumNan/project-todo/internal/filter"
 	"github.com/IridiumNan/project-todo/internal/models"
 	"github.com/IridiumNan/project-todo/internal/store"
 	"github.com/IridiumNan/project-todo/internal/viewer"
 )
 
-// WorkTomlRunner is used to exec the work display command and monitor work status
+// WorkDefaultRunner is used to exec the work display command and monitor work status
+// It just handle the work with status [models.StatusTODO]
 // When this work' status changed, it write log into file
-type WorkTomlRunner struct {
-	DataDir string
+type WorkDefaultRunner struct {
+	// dataDir path to [models.DataDirName]
+	dataDir string
 
-	Work *models.Work
+	// work the work to be run
+	work *models.Work
 
-	Viewer viewer.ContextViewer
+	// viewer load the work viewer [models.ViewerType] to [viewer.ContextViewer]
+	viewer viewer.ContextViewer
 
-	Logger *slog.Logger
+	logger *slog.Logger
+
+	db store.TodoDB
+
+	filter filter.WorkFilter
 }
 
-// NewWorkTomlRunner create a new work runner based on the data dir and work pointer
-func NewWorkTomlRunner(dataDir string, work *models.Work, log io.Writer) *WorkTomlRunner {
+// NewWorkDefaultRunner create a new work runner based on the data dir and work pointer
+func NewWorkDefaultRunner(dir string, log io.Writer, d store.TodoDB, f filter.WorkFilter) *WorkDefaultRunner {
 	handler := slog.NewTextHandler(log, nil)
 	logger := slog.New(handler)
 
-	vi := getWorkViewer(work.Viewer)
-
-	return &WorkTomlRunner{
-		DataDir: dataDir,
-		Work:    work,
-		Viewer:  vi,
-		Logger:  logger,
+	return &WorkDefaultRunner{
+		dataDir: dir,
+		logger:  logger,
+		db:      d,
+		filter:  f,
 	}
 }
 
+// prepare pop a new work from the database by filter
+func (r *WorkDefaultRunner) prepare() error {
+	work, err := r.db.Pop(r.filter)
+	if err != nil {
+		return err
+	}
+
+	r.viewer = getWorkViewer(work.Viewer)
+	r.work = work
+	return nil
+}
+
 // Run starts the specified command and waits for it to complete.
-func (r *WorkTomlRunner) Run(db store.TodoDB) error {
-	r.Work.StartTime = time.Now()
-	r.Work.Status = models.StatusDOING
-	r.Logger.Info("starting work", "id", r.Work.ID, "title", r.Work.Title)
+func (r *WorkDefaultRunner) Run() error {
+	err := r.prepare()
+	if err != nil {
+		return fmt.Errorf("while prepare running, err: %s", err.Error())
+	}
+
+	r.work.StartTime = time.Now()
+	r.work.Status = models.StatusDOING
+	r.logger.Info("starting work", "id", r.work.ID, "title", r.work.Title)
 
 	done := r.Wait()
 	if !done {
-		r.Logger.Warn("exit work without done", "id", r.Work.ID, "title", r.Work.Title)
+		r.logger.Warn("exit work without done", "id", r.work.ID, "title", r.work.Title)
 		return nil
 	}
 
-	r.Work.EndTime = time.Now()
-	r.Work.Status = models.StatusDONE
-	r.Logger.Info("work has done", "id", r.Work.ID, "title", r.Work.Title)
+	r.work.EndTime = time.Now()
+	r.work.Status = models.StatusDONE
+	r.logger.Info("work has done", "id", r.work.ID, "title", r.work.Title)
 
-	return db.Done(r.Work)
+	return r.db.Done(r.work)
 }
 
 // Wait function block the program
 // provide a simple shell to exec some command
 // utils user enter the done string
-func (r *WorkTomlRunner) Wait() (done bool) {
+func (r *WorkDefaultRunner) Wait() (done bool) {
 	reader := bufio.NewReader(os.Stdin)
 	prompt := "todo-work ->"
 	fmt.Println("type help for help manual")
 	fmt.Println(runnerHelp)
 
-	// TODO: Add the option todo which remove the doing-data.toml then exit
-	// Make this work not block all other works
 	exitWithoutDoneCmd := []string{"quit"}
 	for {
 		fmt.Print(prompt)
@@ -93,7 +115,7 @@ func (r *WorkTomlRunner) Wait() (done bool) {
 	}
 }
 
-func (r *WorkTomlRunner) execCmd(cmd string) {
+func (r *WorkDefaultRunner) execCmd(cmd string) {
 	switch cmd {
 	case "help":
 		r.execHelp()
@@ -113,27 +135,27 @@ const runnerHelp = `==================== Help ====================
 
 	`
 
-func (r *WorkTomlRunner) execHelp() {
+func (r *WorkDefaultRunner) execHelp() {
 	fmt.Println(runnerHelp)
 }
 
-func (r *WorkTomlRunner) execView() {
-	err := r.Viewer.PathView(r.Work.ContextPath)
+func (r *WorkDefaultRunner) execView() {
+	err := r.viewer.PathView(r.work.ContextPath)
 	if err != nil {
-		r.Logger.Error("while opening context file with viewer", "err", err)
+		r.logger.Error("while opening context file with viewer", "err", err)
 		fmt.Println("error when open context with viewer: ", err)
 	}
 }
 
-func (r *WorkTomlRunner) execEdit() {
-	err := r.Viewer.PathEdit(r.Work.ContextPath)
+func (r *WorkDefaultRunner) execEdit() {
+	err := r.viewer.PathEdit(r.work.ContextPath)
 	if err != nil {
-		r.Logger.Error("while opening context file with viewer", "err", err)
+		r.logger.Error("while opening context file with viewer", "err", err)
 		fmt.Println("error when open context with viewer: ", err)
 	}
 }
 
-// getWorkViewer get the Viewer struct by the [WorkTomlRunner.Work] viewerType
+// getWorkViewer get the Viewer struct by the [WorkDefaultRunner.Work] viewerType
 func getWorkViewer(t models.ViewerType) (ctxViewer viewer.ContextViewer) {
 	switch t {
 	case models.ViewerBatPrint:

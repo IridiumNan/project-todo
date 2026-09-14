@@ -54,6 +54,8 @@ func execNext(cmd *cobra.Command, args []string) {
 	if err != nil {
 		// slog.Error("error when search data dir, please check if you have init your project with todo init command", "err", err)
 		slog.Error("error when search data dir, try to use global cached dir")
+		// when fail to search from current dir
+		// Use global cached data dir path
 		dataDir = getCacheDir()
 	}
 
@@ -61,28 +63,23 @@ func execNext(cmd *cobra.Command, args []string) {
 }
 
 func nextOnDir(filter filter.WorkFilter, dataDir string) {
-	td, err := store.NewTomlDB(dataDir)
+	td, err := store.NewTomlTodoDB(dataDir)
 	if err != nil {
 		slog.Error("error when create a new toml database connection", "err", err)
 		os.Exit(1)
 	}
-
-	work, err := td.Pop(filter)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	out, file := dataDirWriter(dataDir)
 	defer file.Close()
 
-	r := runner.NewWorkTomlRunner(dataDir, work, out)
+	r := runner.NewWorkDefaultRunner(dataDir, out, td, filter)
 
-	err = r.Run(td)
+	err = r.Run()
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
+// getCacheDir use SelectWithFzf to request user for a cached dir then return dataDir
 func getCacheDir() (dataDir string) {
 	dirCache, err := cache.DefaultCache()
 	if err != nil {
@@ -92,6 +89,7 @@ func getCacheDir() (dataDir string) {
 	return dirCache.SelectWithFzf()
 }
 
+// dataDirWriter open the data dir log file then return the multi-writer with log file and stdout
 func dataDirWriter(dataDir string) (out io.Writer, file io.Closer) {
 	logFilePath := path.Join(dataDir, models.DataDirLogName)
 
@@ -106,6 +104,7 @@ func dataDirWriter(dataDir string) (out io.Writer, file io.Closer) {
 	return
 }
 
+// parseEnergyInput convert the input from flag into [models.Energy]
 func parseEnergyInput(energyStr string) models.Energy {
 	parseHint := "parse energy input success"
 	switch energyStr {

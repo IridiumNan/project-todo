@@ -46,7 +46,7 @@ func (wb *WorkTomlBuilder) buildMDTemplate(idTitleMap map[string]string) (*os.Fi
 }
 
 func (wb *WorkTomlBuilder) Build() error {
-	td, err := store.NewTomlDB(wb.DataDir)
+	td, err := store.NewTomlTodoDB(wb.DataDir)
 	if err != nil {
 		return fmt.Errorf("error when create a new toml database connection, err: %s", err)
 	}

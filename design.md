@@ -78,6 +78,9 @@ This design enable quick pop and single build. Which reach the requirement of th
 
 For student who develop projects and program everyday. There are some school task has the ddl. so this project will provides a ddl list to remaind user that something must be done for school. This is globally stored on \$XDG_STATE_DIR/project-todo/. And run `todo ddl` command for manage them.
 
+> [!WARNING]
+> This may not support because there is no need to manage school works on this method. And it's not the purpose of this project
+
 ---
 
 ## Analysis

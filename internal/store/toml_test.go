@@ -83,7 +83,7 @@ func TestTomlPush(t *testing.T) {
 	dataDirPath := initTestDir(t)
 	// defer removeTestDir(dataDirPath)
 
-	td, err := NewTomlDB(dataDirPath)
+	td, err := NewTomlTodoDB(dataDirPath)
 	if err != nil {
 		t.Errorf("error when create new toml db, err: %s", err)
 	}
@@ -113,7 +113,7 @@ func TestTomlPush(t *testing.T) {
 		t.Errorf("error when pop work, err: %s", err)
 	}
 
-	newTd, err := NewTomlDB(dataDirPath)
+	newTd, err := NewTomlTodoDB(dataDirPath)
 	slog.Info("second td built")
 	if err != nil {
 		t.Errorf("error when create new toml db, err: %s", err)
