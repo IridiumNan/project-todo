@@ -1,12 +1,18 @@
 package store
 
 import (
+	_ "embed"
 	"log/slog"
 	"os"
 	"path"
 
 	"github.com/IridiumNan/project-todo/internal/models"
 )
+
+const readmeFileName = "README.md"
+
+//go:embed README.md
+var dataDirREADME []byte
 
 // InitDataDirOnCurrentDir create data dir and context dir on current path
 // return the dataPath and err
@@ -41,6 +47,12 @@ func InitDataDir(dir string) (err error) {
 
 	slog.Info("init new project-todo data dir", "data_dir_path", dir)
 
+	slog.Info("add a readme file on data dir")
+	err = addDirReadme(dir)
+	if err != nil {
+		slog.Error("when add readme file on data dir", "err", err)
+	}
+
 	contextPath := path.Join(dir, "context")
 
 	err = os.Mkdir(contextPath, 0o755)
@@ -57,4 +69,10 @@ func InitDataDir(dir string) (err error) {
 	slog.Info("creating context dir", "context_path", contextPath)
 
 	return
+}
+
+func addDirReadme(dir string) error {
+	readmePath := path.Join(dir, readmeFileName)
+
+	return os.WriteFile(readmePath, dataDirREADME, 0o444)
 }

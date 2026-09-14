@@ -71,6 +71,8 @@ func (r *WorkTomlRunner) Wait() (done bool) {
 	fmt.Println("type help for help manual")
 	fmt.Println(runnerHelp)
 
+	// TODO: Add the option todo which remove the doing-data.toml then exit
+	// Make this work not block all other works
 	exitWithoutDoneCmd := []string{"quit"}
 	for {
 		fmt.Print(prompt)
@@ -102,7 +104,7 @@ func (r *WorkTomlRunner) execCmd(cmd string) {
 	}
 }
 
-const runnerHelp = `========== Help ==========
+const runnerHelp = `==================== Help ====================
 	view	open context file with viewer (read-only)
 	edit	open context file with editor then edit it
 	done	mark this work as done status then exit

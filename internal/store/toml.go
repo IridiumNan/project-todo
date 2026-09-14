@@ -282,6 +282,8 @@ func (td *TomlDB) Done(work *models.Work) error {
 		return fmt.Errorf("Done: error when write data into done file, err: %s", err)
 	}
 
+	// delete this work from todo works
+	delete(td.TodoWorks, work.ID)
 	return td.Sync()
 }
 

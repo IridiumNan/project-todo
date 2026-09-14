@@ -1,7 +1,6 @@
 package viewer
 
 import (
-	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -29,7 +28,8 @@ func (ppv *PlainPrintViewer) PathView(path string) error {
 }
 
 func (ppv *PlainPrintViewer) PathEdit(ctxPath string) error {
-	return errors.New("PlainPrintViewer not support edit")
+	slog.Warn("print viewer not support edit, use env editor")
+	return utils.OpenWithEnvEditor(ctxPath, "vim", 0o644)
 }
 
 func NewPlainPrintViewer() *PlainPrintViewer {
@@ -59,7 +59,8 @@ func (bpv *BatPrintViewer) PathView(path string) error {
 }
 
 func (bpv *BatPrintViewer) PathEdit(ctxPath string) error {
-	return errors.New("BatPrintViewer not support edit")
+	slog.Warn("print viewer not support edit, use env editor")
+	return utils.OpenWithEnvEditor(ctxPath, "vim", 0o644)
 }
 
 func NewBatPrintViewer() *BatPrintViewer {
