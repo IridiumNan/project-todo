@@ -1,6 +1,10 @@
 # Project-todo
 
-For a Computer Science student who loves programming and go school for job. High self-teaching level. The school task is not the core target. And it makes sense for he to create a customized todo list for different task management about project development and learning some framework. It will focus on Tasks-Dependency Tree and energy-requirement about a task, which makes clean for him to manage a lot of tasks on school (which not suitable for project development.).
+**Version 0.0.1**
+
+For a Computer Science student who loves programming and high self-teaching level. The school task is not the core target. And it makes sense for he to create a customized todo list for different task management about project development and learning some framework. It will focus on Work-Dependency Tree and energy-requirement about a work, which makes it easier for him to manage a lot of works on school (which not suitable for project development.).
+
+---
 
 ## Feature
 
@@ -21,10 +25,58 @@ Which means you can manage this by git and carry it around your different machin
 > [!NOTE]
 > Also `todo init /path/to/project`
 
-## USAGE
+## Quick Start
 
-TODO. I haven't finish this cli, 😃
+- create a new directory for todo metadata and context storage.
+
+```bash
+cd /path/to/project
+
+todo init
+```
+
+- create a new work on this directory
+  this CLI will open a context configuration file, you will assign its title, dependencies, context
+
+```bash
+todo new
+```
+
+- pop a work matches your current energy level
+
+```bash
+todo next -e=0 # for energy low
+
+# -e=1 for energy medium
+
+# -e=2 for energy high
+```
+
+## Usage
+
+```bash
+Usage:
+  todo [command]
+
+Available Commands:
+  completion  Generate the autocompletion script for the specified shell
+  config      Open config file with env editor
+  help        Help about any command
+  init        init a project-todo on current dir
+  log         Open the log file with specific program, default use less
+  new         Create a new work then push it to todo list with statusTODO
+  next        Pop a work on todo list with specific energy level
+
+Flags:
+  -h, --help   help for todo
+
+Use "todo [command] --help" for more information about a command.
+```
 
 ## Design
 
-see the cli design on [design.md](/design.md)
+See the cli design on [design.md](/design.md)
+
+## Todo
+
+The done works analysis will be support on v0.0.2

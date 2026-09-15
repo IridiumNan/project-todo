@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"path"
 
 	"github.com/IridiumNan/project-todo/internal/models"
 	"github.com/IridiumNan/project-todo/internal/store"
@@ -26,7 +27,9 @@ func (wb *WorkTomlBuilder) buildMDTemplate(idTitleMap map[string]string) (*os.Fi
 	mi := NewMDInjector(idTitleMap)
 	mdContent := mi.Inject(newWorkMDTemplate)
 
-	mdFile, err := os.CreateTemp(wb.DataDir, "project-todo-markdown-builder-*.md")
+	tmpDir := path.Join(wb.DataDir, models.DataBuildDirName)
+
+	mdFile, err := os.CreateTemp(tmpDir, "project-todo-markdown-builder-*.md")
 	if err != nil {
 		return nil, fmt.Errorf("error when create a tmp file for editing configuration for build a new work, err: %s", err)
 	}
@@ -44,6 +47,8 @@ func (wb *WorkTomlBuilder) buildMDTemplate(idTitleMap map[string]string) (*os.Fi
 	return mdFile, nil
 }
 
+// Build create a new markdown template file for new command
+// use edit this file then work_parser Parse it
 func (wb *WorkTomlBuilder) Build(db store.DB) (outFilePath string, err error) {
 	works, err := db.All(nil)
 

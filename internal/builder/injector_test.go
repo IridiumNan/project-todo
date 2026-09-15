@@ -13,7 +13,7 @@ var expectedWork string
 
 func TestMDTableInject(t *testing.T) {
 	mdInjector := MDInjector{
-		KeyContentMap: map[string]string{},
+		keyContentMap: map[string]string{},
 	}
 
 	idTitleMap := map[string]string{

@@ -7,11 +7,14 @@ import (
 )
 
 const (
+	VERSION        = "0.0.1"
 	AppName        = "project-todo"
 	EmptyStr       = ""
 	DataDirName    = ".project-todo"
 	DataDirLogName = "log"
 	ContextDirName = "context"
+
+	DataBuildDirName = "build"
 
 	// Toml data file name
 	DataTODOTomlName  = "todo-data.toml"

@@ -22,6 +22,7 @@ var initCmd = &cobra.Command{
 	It will generate a new dir .project-todo.
 	You should use the command on the root dir of your project
 	USAGE: 
+
 	todo init
 	This method init the data dir on current dir
 

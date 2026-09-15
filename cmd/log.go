@@ -17,7 +17,7 @@ import (
 // logCmd represents the log command
 var logCmd = &cobra.Command{
 	Use:   "log",
-	Short: "A command opening the log file with specific program, default use less",
+	Short: "Open the log file with specific program, default use less",
 	Long: `log <command>     will open log file with this command.
 	You can run 
 
@@ -29,18 +29,21 @@ var logCmd = &cobra.Command{
 }
 
 func execLog(cmd *cobra.Command, args []string) {
+	var program string
 	if len(args) == 0 {
-		slog.Warn("the command not found, use editor to open log file")
-		err := openLogWithEditor()
+		slog.Warn("the command not found, use less to open log file")
+
+		err := openLogWithProgram("less")
 		if err != nil {
-			slog.Error("Fail to exec log command", "err", err.Error())
+			slog.Error("Fail to exec log command", "err", err)
 			os.Exit(1)
+
 		}
 
 		return
 	}
 
-	program := strings.Trim(args[0], "\n \t")
+	program = strings.Trim(args[0], "\n \t")
 	err := openLogWithProgram(program)
 	if err != nil {
 		slog.Error("Fail to exec log command", "err", err)

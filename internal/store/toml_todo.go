@@ -253,9 +253,22 @@ func (td *TomlTodoDB) Pop(filter filter.WorkFilter) (*models.Work, error) {
 	return work, nil
 }
 
+func (td *TomlTodoDB) allTodoWorks() []models.Work {
+	all := make([]models.Work, 0, len(td.TodoWorks))
+
+	for _, w := range td.TodoWorks {
+		all = append(all, *w)
+	}
+
+	return all
+}
+
 // All return all todo works from this database
 // when f(work) == true, append this work
 func (td *TomlTodoDB) All(f filter.WorkFilter) ([]models.Work, error) {
+	if f == nil {
+		return td.allTodoWorks(), nil
+	}
 	var matchWorks []models.Work
 
 	for _, work := range td.TodoWorks {
