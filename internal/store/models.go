@@ -18,6 +18,15 @@ func generateTimestampID(inputTime time.Time) string {
 	return utils.HashByTimestamp(inputTime.UnixNano(), 8)
 }
 
+type DB interface {
+	// All return all works for filter return true
+	// if f == nil, return all works loaded
+	//
+	// For [TodoDB], it just store todo works
+	// For [DoneDB], it just store done works
+	All(f filter.WorkFilter) ([]models.Work, error)
+}
+
 // TodoDB provide todo work with Pop function and support Push new todo work
 // Use Done function to change the status on database
 type TodoDB interface {
@@ -36,24 +45,25 @@ type TodoDB interface {
 	// data file name and path depends on the database format
 	Done(work *models.Work) error
 
+	DB
+
 	// Sync the function makes changes on memory saved to disk
 	// It contains the work metadata, context file for new work
 	Sync() error
 }
 
-// ViewDB Provide read-only functions to visit works
-type ViewDB interface {
-	// Load all works from the data file
+// DoneDB Provide read-only functions to visit works
+type DoneDB interface {
+	// Load all works from the data dir
+	// ViewDB will search toml data file from this data dir
 	// This will maintain all works has been loaded
-	Load(dataFilePath string) error
+	Load(dataDirPath string) error
 
 	// Reload Equals to Clear then Load
-	Reload(dataFilePath string) error
+	Reload(dataDirPath string) error
 
 	// Clear remove all works on the database (memory), it will not change the database file, just remove loaded content
 	Clear()
 
-	// All return all works for filter return true
-	// if f == nil, return all works loaded
-	All(f filter.WorkFilter) ([]*models.Work, error)
+	DB
 }

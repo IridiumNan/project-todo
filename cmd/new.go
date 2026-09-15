@@ -4,10 +4,14 @@ Copyright © 2026 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"bufio"
+	"fmt"
 	"log/slog"
 	"os"
 
 	"github.com/IridiumNan/project-todo/internal/builder"
+	"github.com/IridiumNan/project-todo/internal/models"
+	"github.com/IridiumNan/project-todo/internal/store"
 	"github.com/IridiumNan/project-todo/internal/utils"
 	"github.com/spf13/cobra"
 )
@@ -44,11 +48,55 @@ func execNew(cmd *cobra.Command, args []string) {
 
 	wb := builder.NewWorkTomlBuilder(dataDir)
 
-	err = wb.Build()
+	td, err := store.NewTomlTodoDB(dataDir)
+	if err != nil {
+		slog.Error("while creating a new toml database", "err", err)
+	}
+
+	filePath, err := wb.Build(td)
 	if err != nil {
 		slog.Error("error when build a new work", "err", err)
 		os.Exit(1)
 	}
+	blocker := bufio.NewReader(os.Stdin)
+	var conf *models.MDTomlConfig
+	var mdCtx []byte
+	for {
+
+		err = utils.OpenWithEnvEditor(filePath, "vim", utils.ModeEdit)
+		if err != nil {
+			slog.Error("error to open with env editor", "err", err)
+			os.Exit(1)
+		}
+
+		conf, mdCtx, err = wb.ParseTodoWork(filePath)
+
+		if err != builder.ErrParse {
+			break
+		}
+
+		fmt.Print("error when parse, if you want to fix this, enter to continue...")
+		blocker.ReadRune()
+	}
+	if err != nil {
+		slog.Error("while parse work", "err", err)
+		os.Exit(1)
+	}
+
+	id, err := td.Push(conf, mdCtx)
+	if err != nil {
+		slog.Error("error when push new work", "err", err)
+	}
+
+	fmt.Println("New work has been pushed, id: ", id)
+
+	err = td.Sync()
+	if err != nil {
+		slog.Error("while writing work to disk", "err", err)
+		os.Exit(1)
+	}
+
+	os.Remove(filePath)
 }
 
 func init() {

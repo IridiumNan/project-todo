@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"path"
 
 	"github.com/BurntSushi/toml"
 	"github.com/IridiumNan/project-todo/internal/filter"
@@ -17,7 +18,8 @@ type TomlViewDB struct {
 	allWorks []*models.Work
 }
 
-func (td *TomlViewDB) Load(dataFilePath string) error {
+func (td *TomlViewDB) Load(dataDirPath string) error {
+	dataFilePath := path.Join(dataDirPath, models.DataDONETomlName)
 	byteData, err := os.ReadFile(dataFilePath)
 	if err != nil {
 		return fmt.Errorf("error when load works, err: %s", err.Error())
@@ -48,10 +50,10 @@ func (td *TomlViewDB) Clear() {
 	td.allWorks = []*models.Work{}
 }
 
-func (td *TomlViewDB) Reload(dataFilePath string) error {
+func (td *TomlViewDB) Reload(dataDirPath string) error {
 	td.Clear()
 
-	return td.Load(dataFilePath)
+	return td.Load(dataDirPath)
 }
 
 func (td *TomlViewDB) All(f filter.WorkFilter) ([]*models.Work, error) {

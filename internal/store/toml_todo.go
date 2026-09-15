@@ -221,7 +221,7 @@ func (td *TomlTodoDB) writeDoingWorkWhenPop(work models.Work) error {
 }
 
 func (td *TomlTodoDB) Pop(filter filter.WorkFilter) (*models.Work, error) {
-	var poppedWork *models.Work = nil
+	var poppedWork *models.Work
 	var err error
 
 	// check if there is work whose status is [models.StatusDOING]
@@ -251,6 +251,20 @@ func (td *TomlTodoDB) Pop(filter filter.WorkFilter) (*models.Work, error) {
 	// Before programs exit, call [TomlTodoDB.Sync] to update
 
 	return work, nil
+}
+
+// All return all todo works from this database
+// when f(work) == true, append this work
+func (td *TomlTodoDB) All(f filter.WorkFilter) ([]models.Work, error) {
+	var matchWorks []models.Work
+
+	for _, work := range td.TodoWorks {
+		if f(work) {
+			matchWorks = append(matchWorks, *work)
+		}
+	}
+
+	return matchWorks, nil
 }
 
 // resolveDoneDependency call this function when a work status changed from [models.StatusDOING] to [models.StatusDONE]

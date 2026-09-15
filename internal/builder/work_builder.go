@@ -3,15 +3,14 @@
 package builder
 
 import (
-	"bufio"
 	_ "embed"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
 
 	"github.com/IridiumNan/project-todo/internal/models"
 	"github.com/IridiumNan/project-todo/internal/store"
-	"github.com/IridiumNan/project-todo/internal/utils"
 )
 
 type WorkBuilder interface {
@@ -45,61 +44,51 @@ func (wb *WorkTomlBuilder) buildMDTemplate(idTitleMap map[string]string) (*os.Fi
 	return mdFile, nil
 }
 
-func (wb *WorkTomlBuilder) Build() error {
-	td, err := store.NewTomlTodoDB(wb.DataDir)
-	if err != nil {
-		return fmt.Errorf("error when create a new toml database connection, err: %s", err)
-	}
+func (wb *WorkTomlBuilder) Build(db store.DB) (outFilePath string, err error) {
+	works, err := db.All(nil)
 
 	idTitleMap := map[string]string{}
-	for _, work := range td.TodoWorks {
-		idTitleMap[work.ID] = work.Title
-	}
 
+	for idx := range works {
+		idTitleMap[works[idx].ID] = works[idx].Title
+	}
 	mdFile, err := wb.buildMDTemplate(idTitleMap)
 	if err != nil {
-		return fmt.Errorf("error when build markdown template, err: %s", err)
-	}
-
-	err = utils.OpenWithEnvEditor(mdFile.Name(), "vim", utils.ModeEdit)
-	if err != nil {
-		return fmt.Errorf("error when open with environment editor, err: %s", err)
+		return models.EmptyStr, fmt.Errorf("error when build markdown template, err: %s", err)
 	}
 
 	defer func() {
 		mdFile.Close()
-		os.Remove(mdFile.Name())
+		// os.Remove(mdFile.Name())
 	}()
 
-	blockReader := bufio.NewReader(os.Stdin)
-	for {
+	return mdFile.Name(), nil
+}
 
-		byteData, err := os.ReadFile(mdFile.Name())
-		if err != nil {
-			return fmt.Errorf("error when read byte data from md file before parsing it, err: %s", err.Error())
-		}
-		conf, rawMDCtx, err := NewMDWorkParser().Parse(byteData)
-		if err != nil {
-			slog.Error("error when parsing your config file, please edit it again", "err", err)
+var ErrParse = errors.New("parse markdown file failed")
 
-			fmt.Println("enter for editing again...")
-			_, _ = blockReader.ReadString('\n')
-			continue
-		}
-		mdCtx := wb.buildMDCtx(conf, rawMDCtx)
+func (wb *WorkTomlBuilder) ParseTodoWork(filePath string) (conf *models.MDTomlConfig, mdCtx []byte, err error) {
+	var byteData []byte
 
-		_, err = td.Push(conf, mdCtx)
-		if err != nil {
-			return fmt.Errorf("error when push new work, err: %s", err.Error())
-		}
-
-		td.Sync()
-		return nil
+	byteData, err = os.ReadFile(filePath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error when read byte data from md file before parsing it, err: %s", err.Error())
 	}
+
+	var rawMDCtx []byte
+	conf, rawMDCtx, err = NewMDWorkParser().Parse(byteData)
+	if err != nil {
+		slog.Error("error when parsing your config file, please edit it again", "err", err)
+
+		return nil, nil, ErrParse
+	}
+	mdCtx = wb.buildMDCtx(conf, rawMDCtx)
+
+	return
 }
 
 func (wb *WorkTomlBuilder) buildMDCtx(conf *models.MDTomlConfig, rawMDCtx []byte) (mdCtx []byte) {
-	prefix := wb.mdPrefix(conf)
+	prefix := wb.mdEnergyPrefix(conf)
 
 	mdCtx = append(mdCtx, prefix...)
 	mdCtx = append(mdCtx, rawMDCtx...)
@@ -108,7 +97,7 @@ func (wb *WorkTomlBuilder) buildMDCtx(conf *models.MDTomlConfig, rawMDCtx []byte
 	return mdCtx
 }
 
-func (wb *WorkTomlBuilder) mdPrefix(conf *models.MDTomlConfig) []byte {
+func (wb *WorkTomlBuilder) mdEnergyPrefix(conf *models.MDTomlConfig) []byte {
 	noteEnergyStr := `> [!NOTE]
 > energy requirement: %s`
 	title := fmt.Sprintf("# %s\n", conf.Title)
