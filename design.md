@@ -46,41 +46,81 @@ For this system, there is no need to use field Context and links or definition o
 ### New
 
 ```mermaid
-graph TB
-    mdInjector --> |inject|mdTmpFile
+flowchart TD
+    %% Node Definitions with Icons and Semantic Shapes
+    user([ User / Editor]):::actor
+    mdTmpFile[\ mdTmpFile/\]:::file
 
-    user --> |edit|mdTmpFile
+    subgraph mdBuilder ["mdBuilder Module"]
+        direction TB
+        mdInjector["mdInjector"]:::builder
+        mdParser["mdParser"]:::builder
+    end
 
-    mdTmpFile --> |parse|mdParser
+    subgraph parsed ["Intermediate Data"]
+        config["config"]:::data
+        context["context"]:::data
+    end
+
+    subgraph database ["Database Layer"]
+        direction TB
+        metadata[("metadata")]:::db
+        newWork["newWork"]:::db
+        mdContext[("mdContext")]:::db
+        newWork -->|create| mdContext
+        newWork --> |update|metadata
+    end
+
+    %% Workflow / Edge Definitions
+    metadata -->|load| mdBuilder
+    mdInjector -->|1. Inject| mdTmpFile
+    user -->|2. Edit| mdTmpFile
+    mdTmpFile -->|3. Parse| mdParser
 
     mdParser --> config
     mdParser --> context
 
     config --> newWork
-    context -->  newWork
+    context --> newWork
 
-    subgraph mdBuilder
-    mdInjector
-    mdParser
-    end
+    %% Color Theme & Styling Definitions
+    classDef actor fill:#E3F2FD,stroke:#1565C0,stroke-width:2px,color:#0D47A1;
+    classDef file fill:#FFF3E0,stroke:#EF6C00,stroke-width:1.5px,color:#E65100;
+    classDef builder fill:#E8F5E9,stroke:#2E7D32,stroke-width:1.5px,color:#1B5E20;
+    classDef db fill:#F3E5F5,stroke:#6A1B9A,stroke-width:1.5px,color:#4A148C;
+    classDef data fill:#EDE7F6,stroke:#4527A0,stroke-width:1.5px,color:#311B92;
 
-    subgraph database
-    mdContext
-    metadata
-    newWork
-    newWork --> |create|mdContext
-    end
-
-    metadata --> |load| mdBuilder
+    %% Subgraph Box Styling
+    style mdBuilder fill:#F1F8E9,stroke:#558B2F,stroke-width:1.5px,color:#33691E,stroke-dasharray: 4 4
+    style database fill:#F3E5F5,stroke:#7B1FA2,stroke-width:1.5px,color:#4A148C,stroke-dasharray: 4 4
+    style parsed fill:#F5F5F5,stroke:#9E9E9E,stroke-width:1.5px,color:#424242,stroke-dasharray: 4 4
 ```
 
 ### Next
 
 ```mermaid
-graph TB
-    search --> pwd{"pwd/.project-todo/"}
-    pwd --> |"Not Found"|fzf_select_cache
-    pwd --> |"Found"|read --> open --> done_or_quit
+flowchart TD
+    %% Node Definitions
+    search(["Search Start"]):::start
+    pwd{"Check Local\n.project-todo/"}:::decision
+    fzf_select_cache["Fallback: FZF Cache Select"]:::cache
+    read["Load Metadata"]:::process
+    open["Open Context"]:::process
+    done_or_quit(["Done / Quit"]):::terminal
+
+    %% Flow Connections
+    search --> pwd
+    pwd -->|"Not Found"| fzf_select_cache
+    pwd -->|"Found"| read
+    read --> open
+    open --> done_or_quit
+
+    %% Color Theme & Styling Definitions
+    classDef start fill:#E3F2FD,stroke:#1565C0,stroke-width:2px,color:#0D47A1;
+    classDef decision fill:#FFF8E1,stroke:#F57F17,stroke-width:2px,color:#E65100;
+    classDef process fill:#E8F5E9,stroke:#2E7D32,stroke-width:1.5px,color:#1B5E20;
+    classDef cache fill:#F3E5F5,stroke:#7B1FA2,stroke-width:1.5px,color:#4A148C;
+    classDef terminal fill:#ECEFF1,stroke:#37474F,stroke-width:2px,color:#263238;
 ```
 
 - Where cache is a file store previous visit todo dir
@@ -158,13 +198,44 @@ For student who develop projects and program everyday. There are some school tas
 ## DataBase Interface Design
 
 ```mermaid
-graph TB
-    user_input_work_info --> | Push | StatusTODO
-    StatusTODO --> | Pop | StatusDOING
-    StatusTODO --> |create|recover_doing_file
-    StatusDOING --> | Done | StatusDONE
+flowchart TD
+    %% Node Definitions
+    user_input_work_info(["User Input Work Info"]):::input
+    
+    subgraph workflow ["Task State Lifecycle"]
+        StatusTODO["Status: TODO"]:::todo
+        StatusDOING["Status: DOING"]:::doing
+        StatusDONE["Status: DONE"]:::done
+    end
 
-    Memory_update --> | Sync | Data_file_update
+    recover_doing_file[\recover_doing_file/\]:::file
+
+    subgraph persistence ["Data Persistence"]
+        Memory_update["Memory_update"]:::sync
+        Data_file_update[("Data_file_update")]:::db
+    end
+
+    %% Workflow Connections
+    user_input_work_info -->|"Push"| StatusTODO
+    StatusTODO -->|"Pop"| StatusDOING
+    StatusTODO -->|"create"| recover_doing_file
+    StatusDOING -->|"Done"| StatusDONE
+
+    %% Persistence Sync
+    Memory_update -->|"Sync"| Data_file_update
+
+    %% Color Theme & Styling Definitions
+    classDef input fill:#E3F2FD,stroke:#1565C0,stroke-width:1.5px,color:#0D47A1;
+    classDef todo fill:#FFF8E1,stroke:#FFA000,stroke-width:2px,color:#E65100;
+    classDef doing fill:#E1F5FE,stroke:#0288D1,stroke-width:2px,color:#01579B;
+    classDef done fill:#E8F5E9,stroke:#388E3C,stroke-width:2px,color:#1B5E20;
+    classDef file fill:#FFF3E0,stroke:#EF6C00,stroke-width:1.5px,color:#E65100;
+    classDef sync fill:#F3E5F5,stroke:#7B1FA2,stroke-width:1.5px,color:#4A148C;
+    classDef db fill:#EDE7F6,stroke:#512DA8,stroke-width:1.5px,color:#311B92;
+
+    %% Subgraph Styling
+    style workflow fill:#FAFAFA,stroke:#BDBDBD,stroke-width:1.5px,color:#424242,stroke-dasharray: 4 4
+    style persistence fill:#F5F5F5,stroke:#9E9E9E,stroke-width:1.5px,color:#424242,stroke-dasharray: 4 4
 ```
 
 ```go
