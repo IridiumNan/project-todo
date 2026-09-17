@@ -20,9 +20,9 @@ func NewMDWorkParser() MDWorkParser {
 	return MDWorkParser{}
 }
 
-// Parse parse the raw markdown file then return the mdTomlConf and mdContext
+// Parse parse the raw markdown file then return the mdTomlConf and rawMDContext which just contains strings on below [mdContextTitle]
 // Then WorkBuilder use there data to build a new Work
-func (wp MDWorkParser) Parse(rawMD []byte) (mdTomlConf *models.MDTomlConfig, mdContext []byte, err error) {
+func (wp MDWorkParser) Parse(rawMD []byte) (mdTomlConf *models.MDTomlConfig, rawMDContext []byte, err error) {
 	mdParts := bytes.SplitN(rawMD, []byte(mdDefaultSep), 3)
 
 	if len(mdParts) < 3 {
@@ -48,6 +48,8 @@ func (wp MDWorkParser) Parse(rawMD []byte) (mdTomlConf *models.MDTomlConfig, mdC
 	if !found {
 		return nil, nil, fmt.Errorf("error when cutting markdown context part, err: %s", err.Error())
 	}
+
+	mdContext = append([]byte(mdContextTitle), mdContext...)
 
 	mdContext = bytes.Trim(mdContext, " \n")
 

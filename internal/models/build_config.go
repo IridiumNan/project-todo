@@ -5,7 +5,9 @@ package models
 //
 // it's different from the global configuration
 //
-// This toml config is parsed by from a tmp file then used for building a new work
+// # This toml config is parsed by from a tmp file then used for building a new work
+//
+// This is subset of [models.Work]
 type MDTomlConfig struct {
 	Title string `toml:"title"`
 

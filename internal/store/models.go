@@ -24,7 +24,11 @@ type DB interface {
 	//
 	// For [TodoDB], it just store todo works
 	// For [DoneDB], it just store done works
-	All(f filter.WorkFilter) ([]models.Work, error)
+	All(f filter.WorkFilter) ([]*models.Work, error)
+
+	// AllWithMap function returns all works match the filter
+	// The map key is [models.Work.ID]
+	AllWithMap(f filter.WorkFilter) (map[string]*models.Work, error)
 }
 
 // TodoDB provide todo work with Pop function and support Push new todo work

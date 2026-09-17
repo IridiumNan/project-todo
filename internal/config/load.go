@@ -1,3 +1,6 @@
+// Package config set define the [GlobalConfig]
+// If failed to load configuration from file (say configuration file not exist or unmarshal failed)
+// It will offer the default configuration
 package config
 
 import (

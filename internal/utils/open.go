@@ -18,6 +18,7 @@ const (
 
 const NoFlag = ""
 
+// OpenWithEnvEditor open the file with env editor, if EDITOR not set, defaultEditor will be used
 func OpenWithEnvEditor(filePath string, defaultEditor string, mode OpenMode) error {
 	editor := os.Getenv("EDITOR")
 	if editor == models.EmptyStr {
@@ -70,7 +71,3 @@ func GetReadOnlyFlag(editor string) (flag string) {
 
 	return NoFlag
 }
-
-// TODO: add the read-only mode and edit mode for different editor
-// vim and nvim with -R flag (read-only mode)
-// nano with -v flag

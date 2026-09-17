@@ -70,14 +70,28 @@ func InitDataDir(dir string) (err error) {
 	err = os.Mkdir(buildPath, 0o755)
 	if err != nil {
 		if !os.IsExist(err) {
-			slog.Error("creating build dir", "context_path", buildPath, "err", err)
+			slog.Error("creating build dir", "build_path", buildPath, "err", err)
 			return err
 		}
 		err = nil
-		slog.Warn("context dir exist", "path", dir)
+		slog.Warn("build dir exist", "path", dir)
 	}
 
-	slog.Info("creating context dir", "context_path", buildPath)
+	slog.Info("creating build dir", "build_path", buildPath)
+
+	summaryPath := path.Join(dir, models.DataSummaryDirName)
+
+	err = os.Mkdir(summaryPath, 0o755)
+	if err != nil {
+		if !os.IsExist(err) {
+			slog.Error("creating summary dir", "summary_path", buildPath, "err", err)
+			return err
+		}
+		err = nil
+		slog.Warn("summary dir exist", "path", dir)
+	}
+
+	slog.Info("creating summary dir", "summary_path", summaryPath)
 
 	return
 }

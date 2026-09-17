@@ -12,13 +12,20 @@ import (
 	"github.com/IridiumNan/project-todo/internal/models"
 )
 
-// TomlViewDB is an implement of [ViewDB]
-type TomlViewDB struct {
+// TomlDoneDB is an implement of [DoneDB]
+type TomlDoneDB struct {
 	// store all works on the memory
 	allWorks []*models.Work
 }
 
-func (td *TomlViewDB) Load(dataDirPath string) error {
+// NewTomlDoneDB create a new toml done database without any metadata
+// You should call function [TomlDoneDB.Load] before get data
+func NewTomlDoneDB() *TomlDoneDB {
+	return &TomlDoneDB{}
+}
+
+// Load the works which is read-only for now
+func (td *TomlDoneDB) Load(dataDirPath string) error {
 	dataFilePath := path.Join(dataDirPath, models.DataDONETomlName)
 	byteData, err := os.ReadFile(dataFilePath)
 	if err != nil {
@@ -46,17 +53,20 @@ func (td *TomlViewDB) Load(dataDirPath string) error {
 	return nil
 }
 
-func (td *TomlViewDB) Clear() {
+// Clear all works
+func (td *TomlDoneDB) Clear() {
 	td.allWorks = []*models.Work{}
 }
 
-func (td *TomlViewDB) Reload(dataDirPath string) error {
+// Reload clear and load from dataDirPath
+func (td *TomlDoneDB) Reload(dataDirPath string) error {
 	td.Clear()
 
 	return td.Load(dataDirPath)
 }
 
-func (td *TomlViewDB) All(f filter.WorkFilter) ([]*models.Work, error) {
+// All return all works that make f(work) == true
+func (td *TomlDoneDB) All(f filter.WorkFilter) ([]*models.Work, error) {
 	if f == nil {
 		return td.allWorks, nil
 	}
@@ -69,4 +79,29 @@ func (td *TomlViewDB) All(f filter.WorkFilter) ([]*models.Work, error) {
 	}
 
 	return out, nil
+}
+
+func (td *TomlDoneDB) allWithMap() map[string]*models.Work {
+	m := make(map[string]*models.Work, len(td.allWorks))
+
+	for _, w := range td.allWorks {
+		m[w.ID] = w
+	}
+
+	return m
+}
+
+func (td *TomlDoneDB) AllWithMap(f filter.WorkFilter) (map[string]*models.Work, error) {
+	if f == nil {
+		return td.allWithMap(), nil
+	}
+
+	m := make(map[string]*models.Work, len(td.allWorks))
+	for _, w := range td.allWorks {
+		if f(w) {
+			m[w.ID] = w
+		}
+	}
+
+	return m, nil
 }

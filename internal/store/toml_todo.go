@@ -253,27 +253,56 @@ func (td *TomlTodoDB) Pop(filter filter.WorkFilter) (*models.Work, error) {
 	return work, nil
 }
 
-func (td *TomlTodoDB) allTodoWorks() []models.Work {
-	all := make([]models.Work, 0, len(td.TodoWorks))
+func (td *TomlTodoDB) allTodoWorks() []*models.Work {
+	all := make([]*models.Work, 0, len(td.TodoWorks))
 
 	for _, w := range td.TodoWorks {
-		all = append(all, *w)
+		all = append(all, w)
 	}
 
 	return all
 }
 
+// All is the implement of [DB.All]
 // All return all todo works from this database
 // when f(work) == true, append this work
-func (td *TomlTodoDB) All(f filter.WorkFilter) ([]models.Work, error) {
+func (td *TomlTodoDB) All(f filter.WorkFilter) ([]*models.Work, error) {
 	if f == nil {
 		return td.allTodoWorks(), nil
 	}
-	var matchWorks []models.Work
+	var matchWorks []*models.Work
 
 	for _, work := range td.TodoWorks {
 		if f(work) {
-			matchWorks = append(matchWorks, *work)
+			matchWorks = append(matchWorks, work)
+		}
+	}
+
+	return matchWorks, nil
+}
+
+// allTodoWorksWithMap return all todo works with a id [models.Work] map
+func (td *TomlTodoDB) allTodoWorksWithMap() map[string]*models.Work {
+	all := make(map[string]*models.Work, len(td.TodoWorks))
+
+	for id, w := range td.TodoWorks {
+		all[id] = w
+	}
+
+	return all
+}
+
+// AllWithMap is the implement of [DB.AllWithMap]
+func (td *TomlTodoDB) AllWithMap(f filter.WorkFilter) (map[string]*models.Work, error) {
+	if f == nil {
+		return td.allTodoWorksWithMap(), nil
+	}
+
+	matchWorks := map[string]*models.Work{}
+
+	for id, w := range td.TodoWorks {
+		if f(w) {
+			matchWorks[id] = w
 		}
 	}
 

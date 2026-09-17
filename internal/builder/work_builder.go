@@ -39,6 +39,7 @@ func (wb *WorkTomlBuilder) buildMDTemplate(idTitleMap map[string]string) (*os.Fi
 		return nil, fmt.Errorf("error when write markdown content into tmp file, file_path: %s, err: %s", mdFile.Name(), err.Error())
 	}
 
+	// Sync this file to disk for user edit it next
 	err = mdFile.Sync()
 	if err != nil {
 		return nil, fmt.Errorf("error when sync injected md content into file, err: %s", err.Error())
@@ -51,6 +52,11 @@ func (wb *WorkTomlBuilder) buildMDTemplate(idTitleMap map[string]string) (*os.Fi
 // use edit this file then work_parser Parse it
 func (wb *WorkTomlBuilder) Build(db store.DB) (outFilePath string, err error) {
 	works, err := db.All(nil)
+	if err != nil {
+		err = fmt.Errorf("error when query works from database: %s", err.Error())
+
+		return
+	}
 
 	idTitleMap := map[string]string{}
 
@@ -62,16 +68,15 @@ func (wb *WorkTomlBuilder) Build(db store.DB) (outFilePath string, err error) {
 		return models.EmptyStr, fmt.Errorf("error when build markdown template, err: %s", err)
 	}
 
-	defer func() {
-		mdFile.Close()
-		// os.Remove(mdFile.Name())
-	}()
+	defer mdFile.Close()
 
 	return mdFile.Name(), nil
 }
 
 var ErrParse = errors.New("parse markdown file failed")
 
+// ParseTodoWork load then parse the markdown template that edit by user then return the configuration and markdown context for a new work
+// You can just write the mdCtx into file without any append
 func (wb *WorkTomlBuilder) ParseTodoWork(filePath string) (conf *models.MDTomlConfig, mdCtx []byte, err error) {
 	var byteData []byte
 
@@ -92,6 +97,8 @@ func (wb *WorkTomlBuilder) ParseTodoWork(filePath string) (conf *models.MDTomlCo
 	return
 }
 
+// buildMDCtx build the context file byte data
+// It will add title, rawMDCtx, append quote etc...
 func (wb *WorkTomlBuilder) buildMDCtx(conf *models.MDTomlConfig, rawMDCtx []byte) (mdCtx []byte) {
 	prefix := wb.mdEnergyPrefix(conf)
 
@@ -102,6 +109,9 @@ func (wb *WorkTomlBuilder) buildMDCtx(conf *models.MDTomlConfig, rawMDCtx []byte
 	return mdCtx
 }
 
+// mdEnergyPrefix mark the energy requirement on context file head
+// > [!NOTE]
+// > energy requirement: [Low, Medium, High] Energy
 func (wb *WorkTomlBuilder) mdEnergyPrefix(conf *models.MDTomlConfig) []byte {
 	noteEnergyStr := `> [!NOTE]
 > energy requirement: %s`

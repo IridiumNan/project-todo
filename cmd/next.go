@@ -1,5 +1,5 @@
 /*
-Copyright © 2026 NAME HERE <EMAIL ADDRESS>
+Copyright © 2026 IridiumNan 2930416610@qq.com
 */
 package cmd
 
@@ -52,7 +52,12 @@ func execNext(cmd *cobra.Command, args []string) {
 		slog.Error("error when search data dir, try to use global cached dir")
 		// when fail to search from current dir
 		// Use global cached data dir path
-		dataDir = getCacheDir()
+		dataDir, err = getCacheDir()
+		if err != nil {
+			slog.Error("while getting data dir from cache file, exiting", "err", err)
+
+			os.Exit(1)
+		}
 	}
 
 	nextOnDir(f, dataDir)
@@ -76,7 +81,7 @@ func nextOnDir(filter filter.WorkFilter, dataDir string) {
 }
 
 // getCacheDir use SelectWithFzf to request user for a cached dir then return dataDir
-func getCacheDir() (dataDir string) {
+func getCacheDir() (dataDir string, err error) {
 	dirCache, err := cache.DefaultCache()
 	if err != nil {
 		slog.Error("when init dir cache", "err", err)

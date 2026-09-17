@@ -16,6 +16,8 @@ const (
 
 	DataBuildDirName = "build"
 
+	DataSummaryDirName = "summary"
+
 	// Toml data file name
 	DataTODOTomlName  = "todo-data.toml"
 	DataDOINGTomlName = "doing-data.toml"

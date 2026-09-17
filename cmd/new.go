@@ -1,5 +1,5 @@
 /*
-Copyright © 2026 NAME HERE <EMAIL ADDRESS>
+Copyright © 2026 IridiumNan 2930416610@qq.com
 */
 package cmd
 
@@ -61,6 +61,7 @@ func execNew(cmd *cobra.Command, args []string) {
 	blocker := bufio.NewReader(os.Stdin)
 	var conf *models.MDTomlConfig
 	var mdCtx []byte
+	// user retry if encounter any parse error
 	for {
 
 		err = utils.OpenWithEnvEditor(filePath, "vim", utils.ModeEdit)
@@ -96,6 +97,7 @@ func execNew(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
+	// clear the build temp markdown file
 	os.Remove(filePath)
 }
 

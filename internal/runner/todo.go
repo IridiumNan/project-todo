@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/IridiumNan/project-todo/internal/config"
 	"github.com/IridiumNan/project-todo/internal/filter"
 	"github.com/IridiumNan/project-todo/internal/models"
 	"github.com/IridiumNan/project-todo/internal/store"
@@ -34,7 +33,7 @@ type WorkDefaultRunner struct {
 
 	db store.TodoDB
 
-	filter filter.WorkFilter
+	f filter.WorkFilter
 }
 
 // NewWorkDefaultRunner create a new work runner based on the data dir and work pointer
@@ -46,18 +45,18 @@ func NewWorkDefaultRunner(dir string, log io.Writer, d store.TodoDB, f filter.Wo
 		dataDir: dir,
 		logger:  logger,
 		db:      d,
-		filter:  f,
+		f:       f,
 	}
 }
 
 // prepare pop a new work from the database by filter
 func (r *WorkDefaultRunner) prepare() error {
-	work, err := r.db.Pop(r.filter)
+	work, err := r.db.Pop(r.f)
 	if err != nil {
 		return err
 	}
 
-	r.viewer = getWorkViewer(work.Viewer)
+	r.viewer = viewer.GetWorkViewer(work.Viewer)
 	r.work = work
 	return nil
 }
@@ -93,7 +92,7 @@ func (r *WorkDefaultRunner) Wait() (done bool) {
 	reader := bufio.NewReader(os.Stdin)
 	prompt := "todo-work ->"
 	fmt.Println("type help for help manual")
-	fmt.Println(runnerHelp)
+	fmt.Println(defaultRunnerHelp)
 
 	exitWithoutDoneCmd := []string{"quit"}
 	for {
@@ -101,11 +100,11 @@ func (r *WorkDefaultRunner) Wait() (done bool) {
 		cmd, err := reader.ReadString('\n')
 		cmd = strings.Trim(cmd, " \n\t")
 		if err != nil {
-			fmt.Println("fail to read from input")
+			fmt.Println("fail to read from standard input")
 			continue
 		}
-
-		if strings.ToLower(cmd) == "done" {
+		cmd = strings.ToLower(cmd)
+		if cmd == "done" {
 			return true
 		} else if slices.Contains(exitWithoutDoneCmd, cmd) {
 			return false
@@ -115,6 +114,7 @@ func (r *WorkDefaultRunner) Wait() (done bool) {
 	}
 }
 
+// execCmd the command user input while [WorkDefaultRunner.Wait]
 func (r *WorkDefaultRunner) execCmd(cmd string) {
 	switch cmd {
 	case "help":
@@ -126,7 +126,7 @@ func (r *WorkDefaultRunner) execCmd(cmd string) {
 	}
 }
 
-const runnerHelp = `==================== Help ====================
+const defaultRunnerHelp = `==================== Help ====================
 	view	open context file with viewer (read-only)
 	edit	open context file with editor then edit it
 	done	mark this work as done status then exit
@@ -136,7 +136,7 @@ const runnerHelp = `==================== Help ====================
 	`
 
 func (r *WorkDefaultRunner) execHelp() {
-	fmt.Println(runnerHelp)
+	fmt.Println(defaultRunnerHelp)
 }
 
 func (r *WorkDefaultRunner) execView() {
@@ -153,18 +153,4 @@ func (r *WorkDefaultRunner) execEdit() {
 		r.logger.Error("while opening context file with viewer", "err", err)
 		fmt.Println("error when open context with viewer: ", err)
 	}
-}
-
-// getWorkViewer get the Viewer struct by the [WorkDefaultRunner.Work] viewerType
-func getWorkViewer(t models.ViewerType) (ctxViewer viewer.ContextViewer) {
-	switch t {
-	case models.ViewerBatPrint:
-		return viewer.NewBatPrintViewer()
-	case models.ViewerPlainPrint:
-		return viewer.NewPlainPrintViewer()
-	case models.ViewerEditor:
-		return viewer.NewEditorViewer(config.GlobalConf.EditorViewCommands)
-	}
-
-	return nil
 }

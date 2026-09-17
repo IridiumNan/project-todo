@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+var InvalidWork = Work{}
+
 type Work struct {
 	// Use timestamp hash as id
 	// Auto generated

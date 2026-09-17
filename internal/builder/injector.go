@@ -6,6 +6,7 @@ import (
 )
 
 type Injector interface {
+	// Inject function replace all replace holder to value
 	Inject(rawStr string) (injectedStr string)
 }
 
@@ -19,6 +20,7 @@ const (
 //
 // Specially, init it with [NewMDInjector] with idTitleMap
 type MDInjector struct {
+	// The key is replace holder
 	keyContentMap map[string]string
 }
 

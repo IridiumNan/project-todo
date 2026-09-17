@@ -11,7 +11,6 @@ import (
 	"log"
 	"log/slog"
 	"os"
-	"os/exec"
 	"path"
 	"slices"
 	"strings"
@@ -41,24 +40,14 @@ type DirCache struct {
 }
 
 // SelectWithFzf read the cache file then use fzf to select a cache dir then return this dir
-func (c *DirCache) SelectWithFzf() (dataDirPath string) {
+func (c *DirCache) SelectWithFzf() (dataDirPath string, err error) {
 	byteData, err := c.byteData()
 	if err != nil || len(byteData) == 0 {
-		slog.Warn("error when read byte data from cache file", "file_path", c.cacheFilePath, "err", err)
-		return models.EmptyStr
+		return models.EmptyStr, fmt.Errorf("error when read byte data from cache file, file_path: %s", c.cacheFilePath)
 	}
 	buf := bytes.NewBuffer(byteData)
 
-	fzfCmd := exec.Command("fzf")
-
-	var selectedBuf bytes.Buffer
-
-	fzfCmd.Stdin = buf
-	fzfCmd.Stdout = &selectedBuf
-
-	fzfCmd.Run()
-
-	return strings.Trim(selectedBuf.String(), "\n\t ")
+	return utils.SelectByFzf(buf)
 }
 
 // PushNewDir add a new data dir path into cache file
