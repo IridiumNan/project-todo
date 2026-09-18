@@ -104,7 +104,7 @@ func (wb *WorkTomlBuilder) buildMDCtx(conf *models.MDTomlConfig, rawMDCtx []byte
 
 	mdCtx = append(mdCtx, prefix...)
 	mdCtx = append(mdCtx, rawMDCtx...)
-	mdCtx = append(mdCtx, []byte(models.ProjectAppendWithMDQuote())...)
+	// mdCtx = append(mdCtx, []byte(models.ProjectAppendWithMDQuote())...)
 
 	return mdCtx
 }

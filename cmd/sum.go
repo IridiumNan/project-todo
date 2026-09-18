@@ -7,7 +7,10 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"os/exec"
+	"path"
 
+	"github.com/IridiumNan/project-todo/internal/models"
 	"github.com/IridiumNan/project-todo/internal/runner"
 	"github.com/IridiumNan/project-todo/internal/store"
 	"github.com/IridiumNan/project-todo/internal/utils"
@@ -68,7 +71,38 @@ func execSumNew() {
 }
 
 func execSumCd() {
-	fmt.Println("exec sum cd")
+	logFile := utils.SetGlobalLogger()
+	defer logFile.Close()
+
+	pwd, err := os.Getwd()
+	if err != nil {
+		slog.Error("New: error when get current dir, exiting", "err", err)
+		os.Exit(1)
+	}
+
+	dataDir, err := utils.SearchDataDir(pwd)
+
+	if os.IsNotExist(err) {
+		slog.Error("Data Dir not found, please run init command on your project root dir first")
+		os.Exit(1)
+	}
+
+	summaryDir := path.Join(dataDir, models.DataSummaryDirName)
+
+	shell := os.Getenv("SHELL")
+
+	cdCmd := exec.Command(shell, "-c", fmt.Sprintf("cd %s && %s", summaryDir, shell))
+
+	cdCmd.Stdin = os.Stdin
+	cdCmd.Stderr = os.Stderr
+	cdCmd.Stdout = os.Stdout
+
+	fmt.Printf("try to enter summary dir: %s, starting a new shell", summaryDir)
+
+	if err := cdCmd.Run(); err != nil {
+		fmt.Printf("error while running cd cmd, err: %s", err.Error())
+		os.Exit(1)
+	}
 }
 
 func init() {

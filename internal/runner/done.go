@@ -15,6 +15,8 @@ import (
 
 	_ "embed"
 
+	md "github.com/nao1215/markdown"
+
 	"github.com/IridiumNan/project-todo/internal/filter"
 	"github.com/IridiumNan/project-todo/internal/models"
 	"github.com/IridiumNan/project-todo/internal/store"
@@ -51,48 +53,59 @@ func NewDoneWorkRunner(dir string, log io.Writer, d store.DoneDB, f filter.WorkF
 	}
 }
 
-//go:embed done_work.md
-var doneWorkTemplate []byte
+func (r *WorkDoneRunner) contextBody(byteData []byte) (body []byte) {
+	_, after, found := bytes.Cut(byteData, []byte("---"))
+	if !found {
+		return byteData
+	}
 
-const (
-	titleReplaceHolder       = "{{Title}}"
-	currentTimeReplaceHolder = "{{current_time}}"
-	contextReplaceHolder     = "{{Context}}"
-	commentHintReplaceHolder = "{{comment_hint}}"
-	infoReplaceHolder        = "{{info}}"
-)
+	body = bytes.Trim(after, " \n\t")
+
+	return
+}
+
+func (r *WorkDoneRunner) workAppendInfo() string {
+	return fmt.Sprintf("id: %s\ncreate time: %v\nstart time: %v\nduration: %v\ncontext path: `%s`", r.work.ID, r.work.CreateTime, r.work.StartTime, r.work.EndTime.Sub(r.work.StartTime), r.work.ContextPath)
+}
 
 // buildWorkSummary create a new markdown file for this work then return the path
 func (r *WorkDoneRunner) buildWorkSummary() (filePath string, err error) {
-	// TODO:
-	// Use the r.work
-	// inject then create new tmp markdown file on dataDir/build/ then return the file path
-	// Build this file on build dir
-
-	// Write markdown build process there now
-	// FIX: Rewrite the builder with a markdown builder
-
-	byteData := doneWorkTemplate
-
 	contextByte, err := os.ReadFile(r.work.ContextPath)
 	if err != nil {
 		err = fmt.Errorf("error when read the context file, file path: %s, err: %s", r.work.ContextPath, err.Error())
 		return
 	}
 
-	byteData = bytes.Replace(byteData, []byte(titleReplaceHolder), []byte(r.work.Title), 1)
-	byteData = bytes.Replace(byteData, []byte(currentTimeReplaceHolder), []byte(time.Now().String()), 1)
-	byteData = bytes.Replace(byteData, []byte(contextReplaceHolder), contextByte, 1)
-	byteData = bytes.Replace(byteData, []byte(commentHintReplaceHolder), []byte("You can add some comment or append information here or anywhere you want"), 1)
-	byteData = bytes.Replace(byteData, []byte(infoReplaceHolder), []byte("Time and id information replacer"), 1)
+	contextBody := r.contextBody(contextByte)
 
-	return r.dumpWorkSummary(byteData)
+	var buf bytes.Buffer
+
+	markdown := md.NewMarkdown(&buf, md.WithBlockSpacing())
+	err = markdown.H1(r.work.Title).
+		Notef("archive time: %s", time.Now().String()).
+		HorizontalRule().
+		PlainText(string(contextBody)).
+		HorizontalRule().
+		H2("Comment").
+		PlainText("You can add some comment here or everywhere you like").
+		HorizontalRule().
+		H2("Info").
+		Blockquote(r.workAppendInfo()).
+		Build()
+	if err != nil {
+		err = fmt.Errorf("while building summary markdown file, err: %s", err.Error())
+		return
+	}
+
+	return r.dumpWorkSummary(buf.Bytes())
 }
 
 func (r *WorkDoneRunner) dumpWorkSummary(byteData []byte) (filePath string, err error) {
-	summaryDir := path.Join(r.dataDir, models.DataSummaryDirName)
+	buildDir := path.Join(r.dataDir, models.DataBuildDirName)
+	// summaryDir := path.Join(r.dataDir, models.DataSummaryDirName)
+	// place the tmp file on build dir path instead of summary dir
 
-	tmpFile, err := os.CreateTemp(summaryDir, "project-todo-summary-*.md")
+	tmpFile, err := os.CreateTemp(buildDir, "project-todo-summary-*.md")
 	if err != nil {
 		err = fmt.Errorf("error while creating a tmp file, err: %s", err.Error())
 		return
@@ -110,7 +123,6 @@ func (r *WorkDoneRunner) dumpWorkSummary(byteData []byte) (filePath string, err 
 
 // selectWork get all matched works map then use query user select one from list (by fzf)
 // Then return the work
-// if failed, it will return [models.InvalidWork]
 func (r *WorkDoneRunner) selectWork() (err error) {
 	worksMap, err := r.db.AllWithMap(r.f)
 	if err != nil {
