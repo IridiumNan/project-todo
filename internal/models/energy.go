@@ -8,4 +8,6 @@ const (
 	EnergyHigh
 
 	EnergyInvalid
+
+	EnergyAll
 )

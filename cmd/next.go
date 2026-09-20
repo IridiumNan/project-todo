@@ -118,6 +118,10 @@ func parseEnergyInput(energyStr string) models.Energy {
 	case "h", "high", "2":
 		slog.Info(parseHint, "energy", "high")
 		return models.EnergyHigh
+	case "a", "all", "3":
+		slog.Info(parseHint, "energy", "all")
+		// if use [models.EnergyAll], set the filter as nil
+		return models.EnergyAll
 	}
 
 	return models.EnergyInvalid

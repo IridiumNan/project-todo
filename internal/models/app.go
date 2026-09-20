@@ -19,9 +19,10 @@ const (
 	DataSummaryDirName = "summary"
 
 	// Toml data file name
-	DataTODOTomlName  = "todo-data.toml"
-	DataDOINGTomlName = "doing-data.toml"
-	DataDONETomlName  = "done-data.toml"
+	DataTODOTomlName    = "todo-data.toml"
+	DataDOINGTomlName   = "doing-data.toml"
+	DataDONETomlName    = "done-data.toml"
+	DataArchiveTomlName = "archive-data.toml"
 )
 
 const ProjectAppend = `This project is powered by IridiumNan

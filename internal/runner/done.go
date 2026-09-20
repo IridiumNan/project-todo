@@ -17,7 +17,6 @@ import (
 
 	md "github.com/nao1215/markdown"
 
-	"github.com/IridiumNan/project-todo/internal/filter"
 	"github.com/IridiumNan/project-todo/internal/models"
 	"github.com/IridiumNan/project-todo/internal/store"
 	"github.com/IridiumNan/project-todo/internal/utils"
@@ -33,7 +32,7 @@ type WorkDoneRunner struct {
 
 	db store.DoneDB
 
-	f filter.WorkFilter
+	archiveDB *store.TomlArchiveDB
 
 	work *models.Work
 
@@ -41,15 +40,18 @@ type WorkDoneRunner struct {
 	tmpFilePath string
 }
 
-func NewDoneWorkRunner(dir string, log io.Writer, d store.DoneDB, f filter.WorkFilter) *WorkDoneRunner {
+func NewDoneWorkRunner(dir string, log io.Writer, d store.DoneDB) *WorkDoneRunner {
 	handler := slog.NewTextHandler(log, nil)
 	logger := slog.New(handler)
 
+	archDB := store.NewTomlArchiveDB(dir)
+
+	// If filter is nil, create a new ArchivedDB, use it's all Works to create a new filter
 	return &WorkDoneRunner{
-		dataDir: dir,
-		logger:  logger,
-		db:      d,
-		f:       f,
+		dataDir:   dir,
+		logger:    logger,
+		db:        d,
+		archiveDB: archDB,
 	}
 }
 
@@ -100,6 +102,7 @@ func (r *WorkDoneRunner) buildWorkSummary() (filePath string, err error) {
 	return r.dumpWorkSummary(buf.Bytes())
 }
 
+// dumpWorkSummary write the []byte data into summary file
 func (r *WorkDoneRunner) dumpWorkSummary(byteData []byte) (filePath string, err error) {
 	buildDir := path.Join(r.dataDir, models.DataBuildDirName)
 	// summaryDir := path.Join(r.dataDir, models.DataSummaryDirName)
@@ -124,9 +127,13 @@ func (r *WorkDoneRunner) dumpWorkSummary(byteData []byte) (filePath string, err 
 // selectWork get all matched works map then use query user select one from list (by fzf)
 // Then return the work
 func (r *WorkDoneRunner) selectWork() (err error) {
-	worksMap, err := r.db.AllWithMap(r.f)
+	worksMap, err := r.db.AllWithMap(r.archiveDB.AllWorkFilter())
 	if err != nil {
 		return fmt.Errorf("error while getting works from database, err: %s", err.Error())
+	}
+
+	if len(worksMap) == 0 {
+		return errors.New("all done works have been archived")
 	}
 
 	works := utils.MapValues(worksMap)
@@ -169,6 +176,9 @@ func (r *WorkDoneRunner) buildFzfOptions(works []*models.Work) (optionsStr strin
 	return optionsStr, nil
 }
 
+// isBuildTmpFile check if current tmp file path is in build dir
+// if dir(tmpFilePath) == buildDir, return true
+// It means that this file is not archived yet
 func (r *WorkDoneRunner) isBuildTmpFile() bool {
 	buildDir := path.Join(r.dataDir, models.DataBuildDirName)
 
@@ -200,6 +210,7 @@ func (r *WorkDoneRunner) Run() error {
 		return fmt.Errorf("while selecting work, err: %s", err.Error())
 	}
 
+	// build work summary (markdown format) then write it into tmp file
 	r.tmpFilePath, err = r.buildWorkSummary()
 	if err != nil {
 		slog.Error("while building the summary for work", "workId", r.work.ID, "workTitle", r.work.Title, "err", err)
@@ -209,10 +220,6 @@ func (r *WorkDoneRunner) Run() error {
 	// start the wait shell
 	done := r.Wait()
 
-	if !done {
-		return fmt.Errorf("not saved on default Path")
-	}
-
 	defer func() {
 		// if tmp file not point into the build dir, skip clean
 		// else remove the tmp file
@@ -220,8 +227,20 @@ func (r *WorkDoneRunner) Run() error {
 			return
 		}
 
+		fmt.Printf("WARN: found tmp file on build dir, remove it, path: %s\n", r.tmpFilePath)
+
 		os.Remove(r.tmpFilePath)
 	}()
+
+	if !done {
+		return fmt.Errorf("not saved on default Path")
+	}
+
+	if err = r.archiveDB.Append(r.work); err != nil {
+		return fmt.Errorf("error while append the summarized work into archived database, err: %s", err.Error())
+	}
+
+	defer r.archiveDB.Sync()
 
 	return r.saveOnDefaultSummaryPath()
 }

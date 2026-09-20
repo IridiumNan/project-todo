@@ -1,13 +1,9 @@
 package store
 
 import (
-	"bytes"
 	"fmt"
-	"log/slog"
-	"os"
 	"path"
 
-	"github.com/BurntSushi/toml"
 	"github.com/IridiumNan/project-todo/internal/filter"
 	"github.com/IridiumNan/project-todo/internal/models"
 )
@@ -27,27 +23,11 @@ func NewTomlDoneDB() *TomlDoneDB {
 // Load the works which is read-only for now
 func (td *TomlDoneDB) Load(dataDirPath string) error {
 	dataFilePath := path.Join(dataDirPath, models.DataDONETomlName)
-	byteData, err := os.ReadFile(dataFilePath)
+	var err error
+	td.allWorks, err = loadFromTomlFile(dataFilePath)
 	if err != nil {
-		return fmt.Errorf("error when load works, err: %s", err.Error())
-	}
-
-	workParts := bytes.Split(byteData, []byte(defaultTomlSep))
-
-	for idx := range workParts {
-		var work models.Work
-
-		if workByte := bytes.Trim(workParts[idx], "\n\t "); string(workByte) == models.EmptyStr {
-			// Skip invalid part
-			continue
-		}
-
-		err := toml.Unmarshal(workParts[idx], &work)
-		if err != nil {
-			slog.Error("while unmarshal toml metadata", "err", err, "raw_toml_str", string(workParts[idx]))
-		}
-
-		td.allWorks = append(td.allWorks, &work)
+		td.allWorks = make([]*models.Work, 0)
+		return fmt.Errorf("error while loading works from toml file, err: %s", err.Error())
 	}
 
 	return nil
@@ -67,41 +47,9 @@ func (td *TomlDoneDB) Reload(dataDirPath string) error {
 
 // All return all works that make f(work) == true
 func (td *TomlDoneDB) All(f filter.WorkFilter) ([]*models.Work, error) {
-	if f == nil {
-		return td.allWorks, nil
-	}
-
-	out := []*models.Work{}
-	for _, work := range td.allWorks {
-		if f(work) {
-			out = append(out, work)
-		}
-	}
-
-	return out, nil
-}
-
-func (td *TomlDoneDB) allWithMap() map[string]*models.Work {
-	m := make(map[string]*models.Work, len(td.allWorks))
-
-	for _, w := range td.allWorks {
-		m[w.ID] = w
-	}
-
-	return m
+	return filter.NewFilterAssistant().SliceToSlice(td.allWorks, f)
 }
 
 func (td *TomlDoneDB) AllWithMap(f filter.WorkFilter) (map[string]*models.Work, error) {
-	if f == nil {
-		return td.allWithMap(), nil
-	}
-
-	m := make(map[string]*models.Work, len(td.allWorks))
-	for _, w := range td.allWorks {
-		if f(w) {
-			m[w.ID] = w
-		}
-	}
-
-	return m, nil
+	return filter.NewFilterAssistant().SliceToMap(td.allWorks, f)
 }

@@ -61,7 +61,7 @@ func execSumNew() {
 
 	td := store.NewTomlDoneDB()
 
-	r := runner.NewDoneWorkRunner(dataDir, os.Stdout, td, nil)
+	r := runner.NewDoneWorkRunner(dataDir, os.Stdout, td)
 
 	err = r.Run()
 	if err != nil {

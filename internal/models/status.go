@@ -15,4 +15,8 @@ const (
 	// That means this work is not reasonable to start or plan
 	// TODO: When the shell called, update the quit command with StatusQUIT
 	StatusQUIT
+
+	// work will be marked as status archive then write metadata information into archive file
+	// Done work viewer should filter the archived work
+	StatusArchive
 )

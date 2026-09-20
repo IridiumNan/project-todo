@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"os"
 	"path"
-	"slices"
 	"strings"
 	"time"
 
@@ -175,21 +174,22 @@ func (td *TomlTodoDB) removeDoingWorkIfDone(work *models.Work) {
 	slog.Warn("doing work and done work not match, keep doing work file", "doing_work_id", doingWork.ID, "doing_work_title", doingWork.Title)
 }
 
-func (td *TomlTodoDB) fetchWorkByFilter(filter filter.WorkFilter) (*models.Work, error) {
-	var work *models.Work
-
-	for _, todoWork := range td.TodoWorks {
-		if todoWork.BlockedTimes == 0 && filter(todoWork) {
-			work = todoWork
-		}
-	}
-
-	if work == nil {
-		return nil, fmt.Errorf("error when fetch work by filter, there is no valid work")
-	}
-
-	return work, nil
-}
+//  This function is deprecated use [filter.NewFilterAssistant]
+// func (td *TomlTodoDB) fetchWorkByFilter(filter filter.WorkFilter) (*models.Work, error) {
+// 	var work *models.Work
+//
+// 	for _, todoWork := range td.TodoWorks {
+// 		if todoWork.BlockedTimes == 0 && filter(todoWork) {
+// 			work = todoWork
+// 		}
+// 	}
+//
+// 	if work == nil {
+// 		return nil, fmt.Errorf("error when fetch work by filter, there is no valid work")
+// 	}
+//
+// 	return work, nil
+// }
 
 func (td *TomlTodoDB) writeDoingWorkWhenPop(work models.Work) error {
 	doingFilePath := path.Join(td.DataDirPath, models.DataDOINGTomlName)
@@ -220,7 +220,7 @@ func (td *TomlTodoDB) writeDoingWorkWhenPop(work models.Work) error {
 	return nil
 }
 
-func (td *TomlTodoDB) Pop(filter filter.WorkFilter) (*models.Work, error) {
+func (td *TomlTodoDB) Pop(f filter.WorkFilter) (*models.Work, error) {
 	var poppedWork *models.Work
 	var err error
 
@@ -237,12 +237,13 @@ func (td *TomlTodoDB) Pop(filter filter.WorkFilter) (*models.Work, error) {
 
 	slog.Warn("fail to load doing work from metadata", "err", err)
 
-	work, err := td.fetchWorkByFilter(filter)
+	works, err := filter.NewFilterAssistant().MapToSlice(td.TodoWorks, f)
+	// work, err := td.fetchWorkByFilter(filter)
 	if err != nil {
 		return nil, fmt.Errorf("error when pop todo work, err: %s", err.Error())
 	}
 
-	err = td.writeDoingWorkWhenPop(*work)
+	err = td.writeDoingWorkWhenPop(*works[0])
 	if err != nil {
 		slog.Error("while write doing work when pop", "err", err)
 	}
@@ -250,63 +251,19 @@ func (td *TomlTodoDB) Pop(filter filter.WorkFilter) (*models.Work, error) {
 	// this time TodoWorks should not be sync to disk for data safety
 	// Before programs exit, call [TomlTodoDB.Sync] to update
 
-	return work, nil
-}
-
-func (td *TomlTodoDB) allTodoWorks() []*models.Work {
-	all := make([]*models.Work, 0, len(td.TodoWorks))
-
-	for _, w := range td.TodoWorks {
-		all = append(all, w)
-	}
-
-	return all
+	return works[0], nil
 }
 
 // All is the implement of [DB.All]
 // All return all todo works from this database
 // when f(work) == true, append this work
 func (td *TomlTodoDB) All(f filter.WorkFilter) ([]*models.Work, error) {
-	if f == nil {
-		return td.allTodoWorks(), nil
-	}
-	var matchWorks []*models.Work
-
-	for _, work := range td.TodoWorks {
-		if f(work) {
-			matchWorks = append(matchWorks, work)
-		}
-	}
-
-	return matchWorks, nil
-}
-
-// allTodoWorksWithMap return all todo works with a id [models.Work] map
-func (td *TomlTodoDB) allTodoWorksWithMap() map[string]*models.Work {
-	all := make(map[string]*models.Work, len(td.TodoWorks))
-
-	for id, w := range td.TodoWorks {
-		all[id] = w
-	}
-
-	return all
+	return filter.NewFilterAssistant().MapToSlice(td.TodoWorks, f)
 }
 
 // AllWithMap is the implement of [DB.AllWithMap]
 func (td *TomlTodoDB) AllWithMap(f filter.WorkFilter) (map[string]*models.Work, error) {
-	if f == nil {
-		return td.allTodoWorksWithMap(), nil
-	}
-
-	matchWorks := map[string]*models.Work{}
-
-	for id, w := range td.TodoWorks {
-		if f(w) {
-			matchWorks[id] = w
-		}
-	}
-
-	return matchWorks, nil
+	return filter.NewFilterAssistant().MapToMap(td.TodoWorks, f)
 }
 
 // resolveDoneDependency call this function when a work status changed from [models.StatusDOING] to [models.StatusDONE]
@@ -331,7 +288,7 @@ func (td *TomlTodoDB) Done(work *models.Work) error {
 		return fmt.Errorf("Done: error when opening metadata work file, err: %s, file_path: %s, done_work: %v", err, doneFilePath, *work)
 	}
 
-	data := td.buildTomlByteData([]*models.Work{work}, []string{})
+	data := buildTomlByteData([]*models.Work{work}, []string{})
 
 	_, err = doneFile.Write(data)
 	if err != nil {
@@ -396,31 +353,7 @@ func (td *TomlTodoDB) writeContext() (excludeID []string, errs []error) {
 func (td *TomlTodoDB) buildTomlByTodoWorks(excludeID []string) (byteData []byte) {
 	works := utils.MapValues(td.TodoWorks)
 
-	return td.buildTomlByteData(works, excludeID)
-}
-
-// buildTomlByteData convert all works into the toml file format with [defaultTomlSep]
-// It will exclude all work in excludeID whose context file is broken or fail to write
-func (td *TomlTodoDB) buildTomlByteData(works []*models.Work, excludeID []string) (byteData []byte) {
-	for _, work := range works {
-		if slices.Contains(excludeID, work.ID) {
-			slog.Warn("skip work with broken context", "id", work.ID)
-			continue
-		}
-		data, currErr := toml.Marshal(work)
-		if currErr != nil {
-			slog.Error("while marshal work into byte data", "err", currErr, "work", work)
-			continue
-		}
-
-		byteData = append(byteData, data...)
-		// add the [defaultTomlSep] for sep different todo work variant
-		// WARN: DON NOT TOUCH THIS
-		// or system will fail to parse the metadata file
-		byteData = append(byteData, []byte(defaultTomlSep)...)
-	}
-
-	return
+	return buildTomlByteData(works, excludeID)
 }
 
 // NewTomlTodoDB return the TomlTodoDB which is the struct of interface [TodoDB]

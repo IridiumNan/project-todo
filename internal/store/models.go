@@ -6,8 +6,14 @@
 package store
 
 import (
+	"bytes"
+	"fmt"
+	"log/slog"
+	"os"
+	"slices"
 	"time"
 
+	"github.com/BurntSushi/toml"
 	"github.com/IridiumNan/project-todo/internal/filter"
 	"github.com/IridiumNan/project-todo/internal/models"
 	"github.com/IridiumNan/project-todo/internal/utils"
@@ -20,10 +26,11 @@ func generateTimestampID(inputTime time.Time) string {
 
 type DB interface {
 	// All return all works for filter return true
-	// if f == nil, return all works loaded
+	// if f == nil, use [filter.DefaultFilter]
 	//
 	// For [TodoDB], it just store todo works
 	// For [DoneDB], it just store done works
+	//
 	All(f filter.WorkFilter) ([]*models.Work, error)
 
 	// AllWithMap function returns all works match the filter
@@ -70,4 +77,66 @@ type DoneDB interface {
 	Clear()
 
 	DB
+}
+
+// buildTomlByteData convert all works into the toml file format with [defaultTomlSep]
+// It will exclude all work in excludeID whose context file is broken or fail to write
+func buildTomlByteData(works []*models.Work, excludeID []string) (byteData []byte) {
+	for _, work := range works {
+		if slices.Contains(excludeID, work.ID) {
+			slog.Warn("skip work with broken context", "id", work.ID)
+			continue
+		}
+		data, currErr := toml.Marshal(work)
+		if currErr != nil {
+			slog.Error("while marshal work into byte data", "err", currErr, "work", work)
+			continue
+		}
+
+		byteData = append(byteData, data...)
+		// add the [defaultTomlSep] for sep different todo work variant
+		// WARN: DON NOT TOUCH THIS
+		// or system will fail to parse the metadata file
+		byteData = append(byteData, []byte(defaultTomlSep)...)
+	}
+
+	return
+}
+
+func loadFromTomlFile(tomlFilePath string) ([]*models.Work, error) {
+	if _, err := os.Stat(tomlFilePath); os.IsNotExist(err) {
+		// create new file then return a empty slice
+		_, err := os.Create(tomlFilePath)
+		if err != nil {
+			return nil, fmt.Errorf("error while creating a new toml file, err: %s", err.Error())
+		}
+
+		return make([]*models.Work, 0), nil
+	}
+	byteData, err := os.ReadFile(tomlFilePath)
+	if err != nil {
+		return nil, fmt.Errorf("error when load works, err: %s", err.Error())
+	}
+
+	workParts := bytes.Split(byteData, []byte(defaultTomlSep))
+
+	allWorks := make([]*models.Work, 0, 20)
+
+	for idx := range workParts {
+		var work models.Work
+
+		if workByte := bytes.Trim(workParts[idx], "\n\t "); string(workByte) == models.EmptyStr {
+			// Skip invalid part
+			continue
+		}
+
+		err := toml.Unmarshal(workParts[idx], &work)
+		if err != nil {
+			slog.Error("while unmarshal toml metadata", "err", err, "raw_toml_str", string(workParts[idx]))
+		}
+
+		allWorks = append(allWorks, &work)
+	}
+
+	return allWorks, nil
 }
