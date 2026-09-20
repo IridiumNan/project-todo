@@ -1,7 +1,6 @@
 package store
 
 import (
-	"bytes"
 	"fmt"
 	"log/slog"
 	"os"
@@ -238,6 +237,9 @@ func (td *TomlTodoDB) Pop(f filter.WorkFilter) (*models.Work, error) {
 	slog.Warn("fail to load doing work from metadata", "err", err)
 
 	works, err := filter.NewFilterAssistant().MapToSlice(td.TodoWorks, f)
+	if len(works) == 0 {
+		return nil, fmt.Errorf("There is not available work match the condition")
+	}
 	// work, err := td.fetchWorkByFilter(filter)
 	if err != nil {
 		return nil, fmt.Errorf("error when pop todo work, err: %s", err.Error())
@@ -359,46 +361,12 @@ func (td *TomlTodoDB) buildTomlByTodoWorks(excludeID []string) (byteData []byte)
 // NewTomlTodoDB return the TomlTodoDB which is the struct of interface [TodoDB]
 // You can use Add, Pop, and Sync functions
 func NewTomlTodoDB(dataDirPath string) (*TomlTodoDB, error) {
-	allTodoWorks := map[string]*models.Work{}
-
 	// just load works with status todo
 	dataFilePath := path.Join(dataDirPath, models.DataTODOTomlName)
 
-	byteData, err := os.ReadFile(dataFilePath)
-	if os.IsNotExist(err) {
-		slog.Info("toml data file not exist, create a new one", "path", dataFilePath)
-
-		_, err = os.Create(dataFilePath)
-		if err != nil {
-			return nil, fmt.Errorf("error when create a new toml data file, file_path: %s, err: %s", dataFilePath, err.Error())
-		}
-
-		return &TomlTodoDB{
-			TodoWorks:    map[string]*models.Work{},
-			DataDirPath:  dataDirPath,
-			ctxWriteTask: map[pathType][]byte{},
-		}, nil
-	}
+	allTodoWorks, err := loadFromTomlFileToMap(dataFilePath)
 	if err != nil {
-		return nil, fmt.Errorf("error when read data file, file path: %s, err: %s", dataFilePath, err.Error())
-	}
-
-	workParts := bytes.Split(byteData, []byte(defaultTomlSep))
-
-	for idx := range workParts {
-		var work models.Work
-
-		if workByte := bytes.Trim(workParts[idx], "\n\t "); string(workByte) == models.EmptyStr {
-			// Skip invalid part
-			continue
-		}
-
-		err := toml.Unmarshal(workParts[idx], &work)
-		if err != nil {
-			slog.Error("while unmarshal toml metadata", "err", err, "raw_toml_str", string(workParts[idx]))
-		}
-
-		allTodoWorks[work.ID] = &work
+		return nil, err
 	}
 
 	return &TomlTodoDB{

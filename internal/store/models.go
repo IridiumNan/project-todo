@@ -103,8 +103,9 @@ func buildTomlByteData(works []*models.Work, excludeID []string) (byteData []byt
 	return
 }
 
-func loadFromTomlFile(tomlFilePath string) ([]*models.Work, error) {
+func loadFromTomlFileToSlice(tomlFilePath string) ([]*models.Work, error) {
 	if _, err := os.Stat(tomlFilePath); os.IsNotExist(err) {
+		slog.Warn("toml file not found, creating a new one", "path", tomlFilePath)
 		// create new file then return a empty slice
 		_, err := os.Create(tomlFilePath)
 		if err != nil {
@@ -138,5 +139,42 @@ func loadFromTomlFile(tomlFilePath string) ([]*models.Work, error) {
 		allWorks = append(allWorks, &work)
 	}
 
+	return allWorks, nil
+}
+
+func loadFromTomlFileToMap(tomlFilePath string) (map[string]*models.Work, error) {
+	if _, err := os.Stat(tomlFilePath); os.IsNotExist(err) {
+		slog.Warn("toml file not found, creating a new one", "path", tomlFilePath)
+		_, err := os.Create(tomlFilePath)
+		if err != nil {
+			return nil, fmt.Errorf("error while creating a new toml file, err: %s", err.Error())
+		}
+
+		return make(map[string]*models.Work), nil
+	}
+
+	byteData, err := os.ReadFile(tomlFilePath)
+	if err != nil {
+		return nil, fmt.Errorf("error when load works, err: %s", err.Error())
+	}
+	workParts := bytes.Split(byteData, []byte(defaultTomlSep))
+
+	allWorks := make(map[string]*models.Work, 20)
+
+	for idx := range workParts {
+		var work models.Work
+
+		if workByte := bytes.Trim(workParts[idx], "\n\t "); string(workByte) == models.EmptyStr {
+			// skip invalid part
+			continue
+		}
+
+		err := toml.Unmarshal(workParts[idx], &work)
+		if err != nil {
+			slog.Error("while unmarshal toml metadata", "err", err, "raw_toml_str", string(workParts[idx]))
+		}
+
+		allWorks[work.ID] = &work
+	}
 	return allWorks, nil
 }

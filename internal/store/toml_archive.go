@@ -21,7 +21,7 @@ type TomlArchiveDB struct {
 func NewTomlArchiveDB(dataDir string) *TomlArchiveDB {
 	tomlFilePath := path.Join(dataDir, models.DataArchiveTomlName)
 
-	archivedWorks, err := loadFromTomlFile(tomlFilePath)
+	archivedWorks, err := loadFromTomlFileToSlice(tomlFilePath)
 	if err != nil {
 		slog.Error("while loading archive works data", "err", err)
 		archivedWorks = make([]*models.Work, 0)

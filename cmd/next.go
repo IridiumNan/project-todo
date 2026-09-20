@@ -141,6 +141,7 @@ func init() {
 	l or low or 0		low energy now
 	m or medium or 1	medium energy now
 	h or high or 2		high energy now
+	a or all or 3		all energy now, this means no energy limit
 	`
 	nextCmd.Flags().StringP("energy", "e", "low", energyUsage)
 	// Cobra supports local flags which will only run when this command

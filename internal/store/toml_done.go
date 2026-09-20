@@ -24,7 +24,7 @@ func NewTomlDoneDB() *TomlDoneDB {
 func (td *TomlDoneDB) Load(dataDirPath string) error {
 	dataFilePath := path.Join(dataDirPath, models.DataDONETomlName)
 	var err error
-	td.allWorks, err = loadFromTomlFile(dataFilePath)
+	td.allWorks, err = loadFromTomlFileToSlice(dataFilePath)
 	if err != nil {
 		td.allWorks = make([]*models.Work, 0)
 		return fmt.Errorf("error while loading works from toml file, err: %s", err.Error())
