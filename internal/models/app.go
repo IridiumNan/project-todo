@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	VERSION        = "0.0.1"
+	VERSION        = "0.0.2"
 	AppName        = "project-todo"
 	EmptyStr       = ""
 	DataDirName    = ".project-todo"
