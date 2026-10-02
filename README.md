@@ -52,6 +52,14 @@ todo next -e=0 # for energy low
 # -e=2 for energy high
 ```
 
+- Open global todo list cache file
+
+```bash
+todo
+
+# Just open and edit or view it
+```
+
 ## Usage
 
 ```bash

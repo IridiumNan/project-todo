@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 	"os"
+	"path"
 	"strings"
 )
 
@@ -23,6 +24,8 @@ const (
 	DataDOINGTomlName   = "doing-data.toml"
 	DataDONETomlName    = "done-data.toml"
 	DataArchiveTomlName = "archive-data.toml"
+
+	DataGlobalTodoDoc = "todo.md"
 )
 
 const ProjectAppend = `This project is powered by IridiumNan
@@ -54,4 +57,19 @@ func GetHomeDir() (string, error) {
 	}
 
 	return homeDir, nil
+}
+
+func defaultGlobalDataHome() string {
+	return path.Join(homeDir, ".cache", AppName)
+}
+
+// GetGlobalDataHome return the [os.UserCacheDir]/[AppName] as the global dir
+// It will be ~/.cache/[AppName]
+func GetGlobalDataHome() string {
+	cacheDir, err := os.UserCacheDir()
+	if err != nil {
+		return defaultGlobalDataHome()
+	}
+
+	return path.Join(cacheDir, AppName)
 }

@@ -40,4 +40,7 @@ type GlobalConfig struct {
 
 	// EditorViewCommands contains commands when run editor viewer
 	EditorViewCommands []string `toml:"editor_view_commands"`
+
+	// GlobalTodoEditor is the editor which will be called to open global todo list
+	GlobalTodoEditor string `toml:"global_todo_editor"`
 }

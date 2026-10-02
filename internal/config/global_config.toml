@@ -11,3 +11,7 @@ editor_view_commands = [
     "nano",
     "vim"
 ]
+
+
+# this will be used to open the global todo document file
+global_todo_editor = "vim"

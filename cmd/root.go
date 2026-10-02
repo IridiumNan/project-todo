@@ -4,8 +4,13 @@ Copyright © 2026 IridiumNan 2930416610@qq.com
 package cmd
 
 import (
+	"log"
 	"os"
+	"path"
 
+	"github.com/IridiumNan/project-todo/internal/config"
+	"github.com/IridiumNan/project-todo/internal/models"
+	"github.com/IridiumNan/project-todo/internal/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -15,10 +20,27 @@ var rootCmd = &cobra.Command{
 	Short: "A terminal tool for store and manage project todo list by Energy",
 	Long: `The project-todo will store your todo works then support dependencies tree build.
 	You provide your energy status then it will pop an avialable work suitable for now.
-	And resolve the dependencies.`,
+	And resolve the dependencies.
+	
+	If run without any arguments, it will open the global todo doc`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
+	Run: execRoot,
+}
+
+// execRoot open the global todo list recored file
+// Just open it wile the configed editor
+func execRoot(cmd *cobra.Command, args []string) {
+	editor := config.GlobalConf.GlobalTodoEditor
+
+	dataDir := models.GetGlobalDataHome()
+
+	filePath := path.Join(dataDir, models.DataGlobalTodoDoc)
+
+	err := utils.OpenWithProgram(editor, filePath, utils.NoFlag)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
