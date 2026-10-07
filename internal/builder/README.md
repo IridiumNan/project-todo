@@ -3,7 +3,7 @@
 ```mermaid
 graph LR
     subgraph Work_builder 
-        new_work.md --> |user|work_parser --> newWork --> push
+        new_work.md.tmpl --> |user|work_parser --> newWork --> push
     end
 ```
 

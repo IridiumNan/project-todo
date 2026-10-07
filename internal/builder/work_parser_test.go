@@ -38,9 +38,9 @@ func TestParseFunc(t *testing.T) {
 
 	mdParser := MDWorkParser{}
 
-	data, err := os.ReadFile("new_work.md")
+	data, err := os.ReadFile("new_work.md.tmpl")
 	if err != nil {
-		t.Errorf("error when load the new_work.md, err: %s", err)
+		t.Errorf("error when load the new_work.md.tmpl, err: %s", err)
 	}
 
 	mdTomlConf, mdContext, err := mdParser.Parse(data)

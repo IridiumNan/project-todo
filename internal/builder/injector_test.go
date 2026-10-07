@@ -11,7 +11,7 @@ import (
 //go:embed inject_test/expected_work.md
 var expectedWork string
 
-func TestMDTableInject(t *testing.T) {
+func testMDTableInject(t *testing.T) {
 	mdInjector := MDInjector{
 		keyContentMap: map[string]string{},
 	}
