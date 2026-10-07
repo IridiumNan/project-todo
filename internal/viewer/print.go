@@ -51,7 +51,7 @@ func (bpv *BatPrintViewer) PathView(path string) error {
 
 		err = utils.OpenWithProgram("batcat", path, models.EmptyStr)
 		if err != nil {
-			return fmt.Errorf("failed to view context with bat command, both batcat failed", "err", err)
+			return fmt.Errorf("failed to view context with bat command, both batcat failed err: %w", err)
 		}
 
 	}

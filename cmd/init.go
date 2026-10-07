@@ -48,7 +48,7 @@ func execInit(cmd *cobra.Command, args []string) {
 	}
 	if err != nil {
 		if os.IsExist(err) {
-			fmt.Println("\nData dir has existed on current dir, ignore init command\n\n")
+			fmt.Print("\nData dir has existed on current dir, ignore init command\n\n")
 		} else {
 			slog.Error("error when init data dir", "err", err)
 		}

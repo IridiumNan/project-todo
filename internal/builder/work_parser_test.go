@@ -52,7 +52,7 @@ func TestParseFunc(t *testing.T) {
 		t.Errorf("toml config parse mismatch, want %v, got %v", expectedTomlConf, mdTomlConf)
 	}
 
-	expectedContext := []byte("**Write your context here**")
+	expectedContext := []byte("## CONTEXT\n\n**Write your context here**")
 
 	if string(expectedContext) != string(mdContext) {
 		t.Errorf("md context mismatch, want %s, got %s", expectedContext, mdContext)

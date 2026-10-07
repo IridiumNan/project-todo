@@ -53,7 +53,7 @@ func TestSearchOnCurrentDir(t *testing.T) {
 		t.Errorf("error when search path: %s", err.Error())
 	}
 
-	if foundPath != testDir {
+	if foundPath != path.Join(testDir, models.DataDirName) {
 		t.Errorf("found dir which contains data dir: want %s, got %s", testDir, foundPath)
 	}
 
@@ -85,7 +85,7 @@ func TestSearchOnParentDir(t *testing.T) {
 		t.Errorf("error when search with depth 3, err: %s", err.Error())
 	}
 
-	if foundPath != testDir {
+	if foundPath != path.Join(testDir, models.DataDirName) {
 		t.Errorf("found dir which contains data dir: want %s, got %s", testDir, foundPath)
 	}
 
